@@ -13,125 +13,160 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ensala+',
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(), // Tela inicial
+      home: const LoginScreen(),
     );
   }
 }
 
 // Tela de Login
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _obscurePassword = true;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        // Fundo com gradiente verde
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.green.shade200, Colors.green.shade700], // Cores do gradiente
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0), // Espaçamento interno
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start, // Centraliza os widgets verticalmente
-            children: [
-              Image.asset('assets/images/Logo.png', height: 200), // Logo do app
-              SizedBox(height: 100), // Espaço entre logo e campo de usuário
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
 
-
-              // Campo de texto para o usuário
-              TextField(
-  decoration: InputDecoration(
-    hintText: 'Digite seu usuário',
-    hintStyle: TextStyle(
-      color: Colors.white,  // Cor do hint text
-      fontSize: 16,
-    ),
-    prefixIcon: Icon(
-      Icons.person,
-      color: Colors.white,  // Cor do ícone
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(30),
-    ),
-    filled: true,
-    fillColor: Colors.white.withOpacity(0.2),
-  ),
-),
-
-
-              SizedBox(height: 15), // Espaço entre os campos
-
-TextField(
-  obscureText: true,
-  decoration: InputDecoration(
-    hintText: 'Digite sua senha',
-    hintStyle: TextStyle(
-      color: Colors.white,  // Cor do hint text
-      fontSize: 16,
-    ),
-    prefixIcon: Icon(
-      Icons.lock,
-      color: Colors.white,  // Cor do ícone
-    ),
-    suffixIcon: Icon(
-      Icons.visibility,
-      color: Colors.white,  // Cor do ícone
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(30),
-    ),
-    filled: true,
-    fillColor: Colors.white.withOpacity(0.2),
-  ),
-),
-
-
-              SizedBox(height: 20), // Espaço antes do botão
-
-              // Botão de "Entrar"
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: StadiumBorder(), // Bordas arredondadas estilo "pílula"
-                  backgroundColor: Colors.orange, // Cor do botão
-                  foregroundColor: Colors.black,
-                  minimumSize: Size(double.infinity, 50), // Ocupa toda a largura
-                ),
-                  
-                onPressed: () {}, // Ação ao clicar (vazio por enquanto)
-                child: Text('Entrar'),
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            // Fundo com imagem
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/tela.png',
+                fit: BoxFit.cover,
               ),
+            ),
 
-              SizedBox(height: 30), // Espaço entre os campos
-
-
-              Text(
-                'Primeira vez aqui ?',
-                style: TextStyle(color: Colors.white),
+            SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: screenHeight,
                 ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: screenHeight * 0.1),
 
+                        // Logo
+                        Image.asset(
+                          'assets/images/Logo.png',
+                          height: screenHeight * 0.2,
+                        ),
 
-              // Botão de "Cadastrar-se"
-              TextButton(
-                onPressed: () {}, // Ação ao clicar
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  
-                ),
-                child: Text(
-                  'Cadastrar-se',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-                ),
+                        SizedBox(height: screenHeight * 0.05),
 
+                        // Campo de usuário
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Digite seu usuário',
+                            hintStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+
+                        SizedBox(height: screenHeight * 0.02),
+
+                        // Campo de senha com ícone de olho funcional
+                        TextField(
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            hintText: 'Digite sua senha',
+                            hintStyle: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.lock,
+                              color: Colors.white,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+
+                        SizedBox(height: screenHeight * 0.03),
+
+                        // Botão de "Entrar"
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: const StadiumBorder(),
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.black,
+                            minimumSize: Size(screenWidth, 50),
+                          ),
+                          onPressed: () {},
+                          child: const Text('Entrar'),
+                        ),
+
+                        SizedBox(height: screenHeight * 0.03),
+
+                        const Text(
+                          'Primeira vez aqui?',
+                          style: TextStyle(color: Colors.white),
+                        ),
+
+                        TextButton(
+                          onPressed: () {
+                            // Aqui coloca a navegação para cadastro
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text(
+                            'Cadastrar-se',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
