@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/block.dart';
 import '../services/blocks_service.dart';
+import 'rooms_management_screen.dart';
 
 class TechnicalAreaScreen extends StatefulWidget {
   const TechnicalAreaScreen({super.key});
@@ -159,40 +160,10 @@ class _TechnicalAreaScreenState extends State<TechnicalAreaScreen> {
   }
 
   void _showBlockDetails(Block block) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text(
-          block.name,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Total de Salas: ${block.totalRooms}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            Text(
-              'Capacidade Total: ${block.totalCapacity} Alunos',
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Funcionalidade de gerenciamento de salas em desenvolvimento...',
-              style: TextStyle(color: Colors.white70),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            child: const Text('Fechar'),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RoomsManagementScreen(block: block),
       ),
     );
   }
