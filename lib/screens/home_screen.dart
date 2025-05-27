@@ -1,10 +1,10 @@
+
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-
 
 
 class HomeScreen extends StatefulWidget {
@@ -18,17 +18,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _userName; // Armazena o nome do usuário
   //bool _isLoading = false; // Controla o estado de carregamento para logout
 
-@override
-void initState() {
-  super.initState();
-  _initializeDateFormattingAndLoadUser();
-}
-
-Future<void> _initializeDateFormattingAndLoadUser() async {
-  await initializeDateFormatting('pt_BR', null);  // aguarde a inicialização correta
-  _loadUserData();
-}
-
+  @override
+  void initState() {
+    super.initState();
+    initializeDateFormatting('pt_BR',null);
+    _loadUserData(); // Carrega o nome do usuário ao iniciar
+  }
 
   // Função para carregar os dados do usuário logado
   Future<void> _loadUserData() async {
@@ -246,7 +241,7 @@ Center(
           ),
           // Parte direita com bloco e sala
           Container(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.all(40),
             decoration: const BoxDecoration(
               color: Color(0xFF062825),
               borderRadius: BorderRadius.only(
