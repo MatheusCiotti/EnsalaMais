@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import 'technical_area_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -133,6 +134,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           title: 'Perfil',
                           onTap: () {
                             // TODO: Implementar navegação para tela de perfil
+                          },
+                        ),
+                        _buildFeatureCard(
+                          icon: Icons.business,
+                          title: 'Área Técnica',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TechnicalAreaScreen(),
+                              ),
+                            );
                           },
                         ),
                       ],
