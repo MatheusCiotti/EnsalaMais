@@ -1,11 +1,10 @@
-
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-
+import '../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,17 +14,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String? _userName; // Armazena o nome do usuário
-  //bool _isLoading = false; // Controla o estado de carregamento para logout
+  String? _userName;
 
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('pt_BR',null);
-    _loadUserData(); // Carrega o nome do usuário ao iniciar
+    initializeDateFormatting('pt_BR', null);
+    _loadUserData();
   }
 
-  // Função para carregar os dados do usuário logado
   Future<void> _loadUserData() async {
     final user = SupabaseService.currentUser;
     if (user != null) {
@@ -34,49 +31,32 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
-/*
-  // Função para realizar o logout
-  Future<void> _handleLogout() async {
-    setState(() => _isLoading = true);
-    try {
-      await SupabaseService.signOut();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-*/
+
   @override
   Widget build(BuildContext context) {
-    //final double screenHeight = MediaQuery.of(context).size.height;
-
     return SafeArea(
       child: Scaffold(
+        drawer: const AppDrawer(), // ← Drawer adicionado aqui
         body: Stack(
           children: [
-            // Fundo com imagem personalizada
             Positioned.fill(
               child: Image.asset(
                 'assets/images/tela.png',
                 fit: BoxFit.cover,
               ),
             ),
-
-            // Conteúdo da tela
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cabeçalho com logo e nome do usuário
                   Row(
                     children: [
-                      Image.asset(
-                        'assets/images/Logo.png',
-                        height: 80,
+                      Builder(
+                        builder: (context) => IconButton(
+                          icon: const Icon(Icons.menu, color: Colors.white),
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                        ),
                       ),
                       const Spacer(),
                       Column(
@@ -101,24 +81,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 30),
-
-// Envolva o Text com o widget Center
-Center(
-  child: Text(
-    // A data formatada dinamicamente
-    DateFormat('EEEE, d \'de\' MMMM', 'pt_BR').format(DateTime.now()),
-    style: const TextStyle(
-      color: Color.fromRGBO(8, 66, 66, 1),
-      fontSize: 20,
-      fontWeight: FontWeight.w400,
-    ),
-  ),
-),
-
-
-                  // Filtros
+                  Center(
+                    child: Text(
+                      DateFormat('EEEE, d \'de\' MMMM', 'pt_BR')
+                          .format(DateTime.now()),
+                      style: const TextStyle(
+                        color: Color.fromRGBO(8, 66, 66, 1),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
                     runSpacing: 10,
@@ -129,40 +104,13 @@ Center(
                       _buildDropdownButton('Professor'),
                     ],
                   ),
-
                   const SizedBox(height: 20),
-
-                  // Lista de aulas
                   Expanded(
                     child: ListView.builder(
-                      itemCount: 4, // Quantidade de aulas
+                      itemCount: 4,
                       itemBuilder: (context, index) => _buildClassCard(),
                     ),
                   ),
-
-/*                  // Botão de logout
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                      ),
-                      onPressed: _isLoading ? null : _handleLogout,
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Sair'),
-                    ),
-                  ),*/
                 ],
               ),
             ),
@@ -172,7 +120,6 @@ Center(
     );
   }
 
-  // Dropdown personalizado com destaque opcional
   Widget _buildDropdownButton(String label, {bool selected = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -187,18 +134,18 @@ Center(
           Text(
             label,
             style: const TextStyle(
-               color: Color.fromRGBO(8, 66, 66, 1),
+              color: Color.fromRGBO(8, 66, 66, 1),
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(width: 5),
-          const Icon(Icons.keyboard_arrow_down, color: Color.fromRGBO(8, 66, 66, 1)),
+          const Icon(Icons.keyboard_arrow_down,
+              color: Color.fromRGBO(8, 66, 66, 1)),
         ],
       ),
     );
   }
 
-  // Card que representa uma aula
   Widget _buildClassCard() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -208,38 +155,34 @@ Center(
       ),
       child: Row(
         children: [
-          // Parte esquerda com informações
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Matemática Aplicada',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                       color: Color.fromRGBO(8, 66, 66, 1),
+                      color: Color.fromRGBO(8, 66, 66, 1),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
-                    children: const [
+                    children: [
                       Icon(Icons.circle, size: 30, color: Colors.green),
                       SizedBox(width: 6),
                       Text('19:00 - 19:50'),
-                      
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text('Prof. Gustavo Menegestions'),
-                  
+                  SizedBox(height: 4),
+                  Text('Prof. Gustavo Menegestions'),
                 ],
               ),
             ),
           ),
-          // Parte direita com bloco e sala
           Container(
             padding: const EdgeInsets.all(40),
             decoration: const BoxDecoration(
@@ -256,14 +199,14 @@ Center(
                   'Bloco C',
                   style: TextStyle(
                     color: Colors.white,
-                          fontSize: 20,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   'Sala 18',
                   style: TextStyle(
-                          fontSize: 20,
+                    fontSize: 20,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),

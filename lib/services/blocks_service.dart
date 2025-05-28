@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
+import '../models/room_equipment.dart';
 
 class BlocksService {
   static final _supabase = SupabaseService.client;
@@ -79,6 +80,7 @@ class BlocksService {
     required String number,
     required int capacity,
     String? description,
+    RoomEquipment? equipment,
   }) async {
     final response = await _supabase
         .from('rooms')
@@ -87,6 +89,7 @@ class BlocksService {
           'number': number,
           'capacity': capacity,
           'description': description,
+          'equipment': (equipment ?? RoomEquipment()).toJson(),
         })
         .select()
         .single();
@@ -100,6 +103,7 @@ class BlocksService {
     required String number,
     required int capacity,
     String? description,
+    RoomEquipment? equipment,
   }) async {
     final response = await _supabase
         .from('rooms')
@@ -107,6 +111,7 @@ class BlocksService {
           'number': number,
           'capacity': capacity,
           'description': description,
+          'equipment': (equipment ?? RoomEquipment()).toJson(),
         })
         .eq('id', id)
         .select()
