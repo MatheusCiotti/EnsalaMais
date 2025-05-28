@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +13,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   String? _userName;
+  bool _showFilters = false;
+
+  String? _selectedDisciplina;
+  String? _selectedSala;
+  String? _selectedCurso;
+  String? _selectedProfessor;
+
+  final List<String> _disciplinas = ['Matemática', 'Português', 'História'];
+  final List<String> _salas = ['Sala 101', 'Sala 202', 'Sala 303'];
+  final List<String> _cursos = ['Engenharia', 'Direito', 'Administração'];
+  final List<String> _professores = ['Ana', 'Carlos', 'Beatriz'];
 
   @override
   void initState() {
@@ -36,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        drawer: const AppDrawer(), // ← Drawer adicionado aqui
+        drawer: const AppDrawer(),
         body: Stack(
           children: [
             Positioned.fill(
@@ -94,16 +103,54 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      _buildDropdownButton('Disciplina'),
-                      _buildDropdownButton('Sala', selected: true),
-                      _buildDropdownButton('Curso'),
-                      _buildDropdownButton('Professor'),
-                    ],
+
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _showFilters = !_showFilters;
+                      });
+                    },
+                    icon: const Icon(Icons.filter_list),
+                    label: const Text('Filtro'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.3),
+                      foregroundColor: const Color.fromRGBO(8, 66, 66, 1),
+                    ),
                   ),
+
+                  if (_showFilters) ...[
+                    const SizedBox(height: 10),
+                    _buildDropdownFilter(
+                        'Disciplina', _disciplinas, _selectedDisciplina,
+                        (value) {
+                      setState(() {
+                        _selectedDisciplina = value;
+                      });
+                    }),
+                    const SizedBox(height: 10),
+                    _buildDropdownFilter('Sala', _salas, _selectedSala,
+                        (value) {
+                      setState(() {
+                        _selectedSala = value;
+                      });
+                    }),
+                    const SizedBox(height: 10),
+                    _buildDropdownFilter('Curso', _cursos, _selectedCurso,
+                        (value) {
+                      setState(() {
+                        _selectedCurso = value;
+                      });
+                    }),
+                    const SizedBox(height: 10),
+                    _buildDropdownFilter(
+                        'Professor', _professores, _selectedProfessor,
+                        (value) {
+                      setState(() {
+                        _selectedProfessor = value;
+                      });
+                    }),
+                  ],
+
                   const SizedBox(height: 20),
                   Expanded(
                     child: ListView.builder(
@@ -120,29 +167,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDropdownButton(String label, {bool selected = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.3),
-        border: selected ? Border.all(color: Colors.blue) : null,
+  Widget _buildDropdownFilter(String label, List<String> items,
+      String? selectedValue, ValueChanged<String?> onChanged) {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.3),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color.fromRGBO(8, 66, 66, 1),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 5),
-          const Icon(Icons.keyboard_arrow_down,
-              color: Color.fromRGBO(8, 66, 66, 1)),
-        ],
-      ),
+      value: selectedValue,
+      items: items
+          .map((item) => DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    color: Color.fromRGBO(8, 66, 66, 1),
+                  ),
+                ),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      dropdownColor: Colors.white,
     );
   }
 
