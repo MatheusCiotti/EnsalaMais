@@ -28,12 +28,18 @@ class SupabaseService {
       final AuthResponse response = await client.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': fullName},
+        data: {
+          'name': fullName,
+          'role': 'Aluno', // Papel padrão para novos usuários
+        },
       );
 
       if (response.user == null) {
         throw 'Erro ao criar usuário';
       }
+
+      // Aguardar o trigger criar o registro na tabela users
+      await Future.delayed(const Duration(seconds: 1));
 
       return response;
     } on AuthException catch (e) {
@@ -102,11 +108,22 @@ class SupabaseService {
       await client.auth.updateUser(
         UserAttributes(
           data: {
-            'full_name': fullName,
+            'name': fullName,
             if (avatarUrl != null) 'avatar_url': avatarUrl,
           },
         ),
       );
+
+      // Atualizar também na tabela users
+      final currentUser = client.auth.currentUser;
+      if (currentUser != null) {
+        await client
+            .from('users')
+            .update({
+              'name': fullName,
+            })
+            .eq('id', currentUser.id);
+      }
     } catch (e) {
       throw 'Erro ao atualizar perfil: $e';
     }

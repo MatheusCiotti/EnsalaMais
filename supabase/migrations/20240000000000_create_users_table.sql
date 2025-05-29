@@ -12,20 +12,38 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create a secure policy
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
+-- Função auxiliar para verificar se o usuário é administrador
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+BEGIN
+  RETURN (
+    SELECT role = 'Administração'
+    FROM users
+    WHERE id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Políticas atualizadas para incluir verificação de administrador
 CREATE POLICY "Users are viewable by authenticated users" 
   ON users FOR SELECT 
   TO authenticated 
   USING (true);
 
-CREATE POLICY "Users can be created by authenticated users" 
+CREATE POLICY "Users can be created by administrators" 
   ON users FOR INSERT 
   TO authenticated 
-  WITH CHECK (true);
+  WITH CHECK (is_admin());
 
-CREATE POLICY "Users can be updated by authenticated users" 
+CREATE POLICY "Users can be updated by administrators" 
   ON users FOR UPDATE 
   TO authenticated 
-  USING (true);
+  USING (is_admin());
+
+CREATE POLICY "Users can be deleted by administrators" 
+  ON users FOR DELETE 
+  TO authenticated 
+  USING (is_admin());
 
 -- Create a trigger to automatically create a user record when a new auth.users record is created
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
