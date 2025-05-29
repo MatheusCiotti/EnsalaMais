@@ -303,33 +303,81 @@ class _UsersScreenState extends State<UsersScreen> {
               onPressed: () async {
                 if (nameController.text.isNotEmpty &&
                     emailController.text.isNotEmpty) {
+                  // Atualizar o botão para loading
+                  setState(() => _isLoading = true);
+
                   try {
-                    await UsersService.updateUser(
+                    final response = await UsersService.updateUser(
                       userId: user.id,
                       name: nameController.text,
                       email: emailController.text,
                       role: selectedRole,
                     );
-                    
-                    if (mounted) {
-                      Navigator.pop(context);
+
+                    if (!mounted) return;
+
+                    // Atualizar o usuário na lista local
+                    setState(() {
+                      final index = users.indexWhere((u) => u.id == user.id);
+                      if (index != -1) {
+                        users[index] = User.fromJson(response);
+                      }
+                      _isLoading = false;
+                    });
+
+                    // Fechar o diálogo suavemente
+                    Navigator.of(context).pop();
+
+                    // Mostrar snackbar após a transição
+                    Future.microtask(() {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Usuário atualizado com sucesso!'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
                         ),
                       );
-                      _loadUsers(); // Recarrega a lista de usuários
-                    }
+                    });
+
                   } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erro ao atualizar usuário: $e')),
-                      );
+                    if (!mounted) return;
+
+                    setState(() => _isLoading = false);
+
+                    String errorMessage = e.toString().replaceAll('Exception: ', '');
+                    if (errorMessage.contains('Apenas administradores')) {
+                      errorMessage = 'Apenas administradores podem atualizar usuários';
+                    } else if (errorMessage.contains('não tem permissão')) {
+                      errorMessage = 'Você não tem permissão para atualizar usuários';
+                    } else if (errorMessage.contains('e-mail já está em uso')) {
+                      errorMessage = 'Este e-mail já está em uso';
                     }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(errorMessage),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
                   }
                 }
               },
-              child: const Text('Salvar'),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Salvar'),
+              ),
             ),
           ],
         ),
@@ -386,110 +434,114 @@ class _UsersScreenState extends State<UsersScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: ListTile(
-                                  title: Text(
-                                    user.name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                  child: ListTile(
+                                    title: Text(
+                                      user.name,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user.email,
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user.email,
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.7),
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        'Função: ${user.role}',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
+                                        Text(
+                                          'Função: ${user.role}',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.7),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.orange,
+                                      ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            color: Colors.orange,
+                                          ),
+                                          onPressed: () => _showEditUserDialog(user),
                                         ),
-                                        onPressed: () => _showEditUserDialog(user),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () async {
-                                          final confirm = await showDialog<bool>(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              backgroundColor: Colors.grey[900],
-                                              title: const Text(
-                                                'Confirmar exclusão',
-                                                style: TextStyle(color: Colors.white),
-                                              ),
-                                              content: Text(
-                                                'Deseja realmente excluir o usuário ${user.name}?',
-                                                style: const TextStyle(color: Colors.white),
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context, false),
-                                                  style: TextButton.styleFrom(foregroundColor: Colors.white),
-                                                  child: const Text('Cancelar'),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () async {
+                                            final confirm = await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                backgroundColor: Colors.grey[900],
+                                                title: const Text(
+                                                  'Confirmar exclusão',
+                                                  style: TextStyle(color: Colors.white),
                                                 ),
-                                                ElevatedButton(
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: Colors.red,
-                                                    foregroundColor: Colors.white,
+                                                content: Text(
+                                                  'Deseja realmente excluir o usuário ${user.name}?',
+                                                  style: const TextStyle(color: Colors.white),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.pop(context, false),
+                                                    style: TextButton.styleFrom(foregroundColor: Colors.white),
+                                                    child: const Text('Cancelar'),
                                                   ),
-                                                  onPressed: () => Navigator.pop(context, true),
-                                                  child: const Text('Excluir'),
-                                                ),
-                                              ],
-                                            ),
-                                          );
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: Colors.red,
+                                                      foregroundColor: Colors.white,
+                                                    ),
+                                                    onPressed: () => Navigator.pop(context, true),
+                                                    child: const Text('Excluir'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
 
-                                          if (confirm == true) {
-                                            try {
-                                              await UsersService.deleteUser(user.id);
-                                              if (mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text('Usuário excluído com sucesso!'),
-                                                  ),
-                                                );
-                                                _loadUsers();
-                                              }
-                                            } catch (e) {
-                                              if (mounted) {
-                                                String errorMessage = 'Erro ao excluir usuário';
-                                                
-                                                if (e.toString().contains('not_admin')) {
-                                                  errorMessage = 'Apenas administradores podem excluir usuários';
-                                                } else if (e.toString().contains('not_allowed')) {
-                                                  errorMessage = 'Você não tem permissão para excluir usuários';
+                                            if (confirm == true) {
+                                              try {
+                                                await UsersService.deleteUser(user.id);
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Usuário excluído com sucesso!'),
+                                                    ),
+                                                  );
+                                                  _loadUsers();
                                                 }
+                                              } catch (e) {
+                                                if (mounted) {
+                                                  String errorMessage = 'Erro ao excluir usuário';
+                                                  
+                                                  if (e.toString().contains('not_admin')) {
+                                                    errorMessage = 'Apenas administradores podem excluir usuários';
+                                                  } else if (e.toString().contains('not_allowed')) {
+                                                    errorMessage = 'Você não tem permissão para excluir usuários';
+                                                  }
 
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(errorMessage),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(errorMessage),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
                                               }
                                             }
-                                          }
-                                        },
-                                      ),
-                                    ],
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

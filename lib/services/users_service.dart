@@ -92,24 +92,24 @@ class UsersService {
     required String email,
     required String role,
   }) async {
-    if (!await isAdmin()) {
-      throw Exception('Apenas administradores podem atualizar usuários');
-    }
-
     try {
-      // Atualizar os metadados do usuário no Auth
-      await _supabase.auth.admin.updateUserById(
-        userId,
-        attributes: AdminUserAttributes(
-          email: email,
-          userMetadata: {
-            'name': name,
-            'role': role,
-          },
-        ),
-      );
+      // Primeiro verificar se o usuário atual é administrador
+      final currentUser = _supabase.auth.currentUser;
+      if (currentUser == null) {
+        throw Exception('Usuário não autenticado');
+      }
 
-      // Atualizar os dados do usuário na tabela users
+      final adminCheck = await _supabase
+          .from('users')
+          .select('role')
+          .eq('id', currentUser.id)
+          .single();
+
+      if (adminCheck['role'] != 'Administração') {
+        throw Exception('Apenas administradores podem atualizar usuários');
+      }
+
+      // Atualizar na tabela users
       final response = await _supabase
           .from('users')
           .update({
@@ -120,9 +120,16 @@ class UsersService {
           .eq('id', userId)
           .select()
           .single();
-      
+
       return response;
     } catch (e) {
+      if (e.toString().contains('not found')) {
+        throw Exception('Usuário não encontrado');
+      } else if (e.toString().contains('duplicate key')) {
+        throw Exception('Este e-mail já está em uso');
+      } else if (e.toString().contains('permission denied')) {
+        throw Exception('Você não tem permissão para realizar esta operação');
+      }
       throw Exception('Erro ao atualizar usuário: ${e.toString()}');
     }
   }
