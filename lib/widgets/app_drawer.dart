@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../screens/technical_area_screen.dart';
+import '../screens/courses_screen.dart';
+import '../screens/users_screen.dart';
+import '../services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -50,16 +53,21 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(
-              Icons.meeting_room,
+              Icons.school,
               color: Colors.orange,
             ),
             title: const Text(
-              'Salas',
+              'Cursos',
               style: TextStyle(color: Colors.white),
             ),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navegar para tela de salas
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CoursesScreen(),
+                ),
+              );
             },
           ),
           ListTile(
@@ -109,6 +117,25 @@ class AppDrawer extends StatelessWidget {
               // TODO: Navegar para tela de perfil
             },
           ),
+          ListTile(
+            leading: const Icon(
+              Icons.person_add,
+              color: Colors.orange,
+            ),
+            title: const Text(
+              'Usuários',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UsersScreen(),
+                ),
+              );
+            },
+          ),
           const Divider(color: Colors.white24),
           ListTile(
             leading: const Icon(
@@ -120,8 +147,15 @@ class AppDrawer extends StatelessWidget {
               style: TextStyle(color: Colors.red),
             ),
             onTap: () async {
-              Navigator.pop(context);
-              // TODO: Implementar logout
+              try {
+                await AuthService.signOut(context);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao sair: $e')),
+                  );
+                }
+              }
             },
           ),
         ],
