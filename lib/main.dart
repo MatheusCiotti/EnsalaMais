@@ -4,6 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/register_screen.dart';
 import 'services/supabase_service.dart';
+import 'screens/users_screen.dart';
+import 'screens/rooms_screen.dart';
+import 'screens/technical_area_screen.dart';
+import 'screens/classes_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +43,12 @@ class MyApp extends StatelessWidget {
           return const LoginScreen();
         },
       ),
+      routes: {
+        '/users': (context) => const UsersScreen(),
+        '/rooms': (context) => const RoomsScreen(),
+        '/technical_area': (context) => const TechnicalAreaScreen(),
+        '/classes': (context) => const ClassesScreen(),
+      },
     );
   }
 }

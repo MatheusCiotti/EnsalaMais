@@ -90,17 +90,14 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(
-              Icons.history,
-              color: Colors.orange,
-            ),
+            leading: const Icon(Icons.school, color: Colors.white),
             title: const Text(
-              'Histórico',
+              'Aulas',
               style: TextStyle(color: Colors.white),
             ),
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navegar para tela de histórico
+              Navigator.pushNamed(context, '/classes');
             },
           ),
           ListTile(
