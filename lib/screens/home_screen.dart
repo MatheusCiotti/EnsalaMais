@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sala/models/class.dart';
+import 'package:sala/services/classes_service.dart';
 import '../services/supabase_service.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -25,12 +27,38 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _cursos = ['Engenharia', 'Direito', 'Administração'];
   final List<String> _professores = ['Ana', 'Carlos', 'Beatriz'];
 
-  @override
-  void initState() {
-    super.initState();
-    initializeDateFormatting('pt_BR', null);
-    _loadUserData();
+//  List<Map<String, dynamic>> _aulas = [];
+//bool _isLoadingAulas = true;
+
+List<Class> _aulas = [];
+bool _isLoadingAulas = true;
+
+
+
+@override
+void initState() {
+  super.initState();
+  initializeDateFormatting('pt_BR', null);
+  _loadUserData();
+  _loadAulas();
+}
+
+Future<void> _loadAulas() async {
+  try {
+    final aulas = await ClassesService.getClasses();
+    setState(() {
+      _aulas = aulas;
+      _isLoadingAulas = false;
+    });   
+  } catch (e) {
+    setState(() => _isLoadingAulas = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erro ao carregar aulas: $e')),
+    );
   }
+}
+
+
 
   Future<void> _loadUserData() async {
     final user = SupabaseService.currentUser;
@@ -79,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            _userName ?? 'Carregando...',
+                            _userName ?? 'Usuário',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -152,12 +180,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
 
                   const SizedBox(height: 20),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: 4,
-                      itemBuilder: (context, index) => _buildClassCard(),
-                    ),
-                  ),
+
+Expanded(
+  child: _isLoadingAulas
+      ? const Center(child: CircularProgressIndicator())
+      : _aulas.isEmpty
+          ? const Center(child: Text('Nenhuma aula encontrada'))
+          : ListView.builder(
+              itemCount: _aulas.length,
+              itemBuilder: (context, index) =>
+                  _buildClassCardFromData(_aulas[index]),
+            ),
+),
+
+
                 ],
               ),
             ),
@@ -195,76 +231,103 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildClassCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Matemática Aplicada',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromRGBO(8, 66, 66, 1),
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.circle, size: 30, color: Colors.green),
-                      SizedBox(width: 6),
-                      Text('19:00 - 19:50'),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Text('Prof. Gustavo Menegestions'),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(40),
-            decoration: const BoxDecoration(
-              color: Color(0xFF062825),
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              ),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+  
+Widget _buildClassCardFromData(Class aula) {
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bloco C',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                  aula.name ?? 'Sem título',
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(8, 66, 66, 1),
                   ),
                 ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.circle, size: 30, color: Colors.green),
+                    const SizedBox(width: 6),
+//HORARIO DE AULA                    
+                    Text(
+  aula.schedule ?? '00:00',
+  style: const TextStyle(
+    color: Color.fromARGB(255, 0, 0, 0), // Altere para a cor desejada
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+  ),
+),
+
+                  ],
+                ),
+                const SizedBox(height: 4),
+
+//PROFESSOR
                 Text(
-                  'Sala 18',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+  'Prof. ${aula.professorName ?? 'Desconhecido'}',
+  style: const TextStyle(
+    color: Color.fromARGB(255, 0, 0, 0), // ou outra cor
+    fontSize: 14,
+    fontStyle: FontStyle.italic,
+  ),
+),
+
               ],
             ),
           ),
-        ],
+        ),
+
+//PARTE VERDE ONDE MOSTRA A SALA
+        Container(
+  height: 110,
+  width: 130, // ou 120, ajuste conforme seu layout
+  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+  decoration: const BoxDecoration(
+    color: Color(0xFF062825),
+    borderRadius: BorderRadius.only(
+      topRight: Radius.circular(16),
+      bottomRight: Radius.circular(16),
+    ),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      const Text(
+        'Sala',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
       ),
-    );
-  }
+      Text(
+        aula.roomName ?? 'Sala ?',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 15,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  ),
+),
+
+      ],
+    ),
+  );
+}
+
+
 }

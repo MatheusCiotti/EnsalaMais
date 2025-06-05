@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
 class SupabaseService {
+  // Inicializa o Supabase
   static Future<void> initialize() async {
     try {
       await Supabase.initialize(
@@ -13,12 +14,17 @@ class SupabaseService {
     }
   }
 
+
+  // Cliente Supabase
   static SupabaseClient get client => Supabase.instance.client;
 
+  // Usuário atual autenticado
   static User? get currentUser => client.auth.currentUser;
 
+  // Stream de mudanças no estado de autenticação
   static Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
 
+  // Cadastro de novo usuário
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -30,7 +36,7 @@ class SupabaseService {
         password: password,
         data: {
           'name': fullName,
-          'role': 'Aluno', // Papel padrão para novos usuários
+          'role': 'Aluno',
         },
       );
 
@@ -38,7 +44,7 @@ class SupabaseService {
         throw 'Erro ao criar usuário';
       }
 
-      // Aguardar o trigger criar o registro na tabela users
+      // Aguardar trigger criar registro na tabela users (se houver)
       await Future.delayed(const Duration(seconds: 1));
 
       return response;
@@ -54,6 +60,7 @@ class SupabaseService {
     }
   }
 
+  // Login de usuário
   static Future<AuthResponse> signIn({
     required String email,
     required String password,
@@ -84,6 +91,7 @@ class SupabaseService {
     }
   }
 
+  // Logout do usuário
   static Future<void> signOut() async {
     try {
       await client.auth.signOut();
@@ -92,6 +100,7 @@ class SupabaseService {
     }
   }
 
+  // Resetar senha via e-mail
   static Future<void> resetPassword(String email) async {
     try {
       await client.auth.resetPasswordForEmail(email);
@@ -100,6 +109,7 @@ class SupabaseService {
     }
   }
 
+  // Atualizar perfil do usuário
   static Future<void> updateProfile({
     required String fullName,
     String? avatarUrl,
@@ -114,7 +124,6 @@ class SupabaseService {
         ),
       );
 
-      // Atualizar também na tabela users
       final currentUser = client.auth.currentUser;
       if (currentUser != null) {
         await client
@@ -128,4 +137,18 @@ class SupabaseService {
       throw 'Erro ao atualizar perfil: $e';
     }
   }
-} 
+
+  // *** NOVO: Buscar aulas da tabela "aulas" ***
+ static Future<List<Map<String, dynamic>>> fetchAulas() async {
+  try {
+    final data = await client
+        .from('aulas')
+        .select()
+        .order('horario', ascending: true) as List<dynamic>;
+
+    return data.map((item) => Map<String, dynamic>.from(item)).toList();
+  } catch (e) {
+    throw 'Erro ao buscar aulas: $e';
+  }
+}
+}
