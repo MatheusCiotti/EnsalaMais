@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/block.dart';
 import '../models/room.dart';
-import '../models/room_equipment.dart';
 import '../services/blocks_service.dart';
 
 class RoomsManagementScreen extends StatefulWidget {
@@ -44,9 +43,8 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
   }
 
   void _showAddRoomDialog() {
-    final numberController = TextEditingController();
-    final capacityController = TextEditingController();
-    final descriptionController = TextEditingController();
+    final nomeController = TextEditingController();
+    final descricaoController = TextEditingController();
     bool hasAirConditioning = false;
     bool hasProjector = false;
     bool hasTV = false;
@@ -65,10 +63,10 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  controller: numberController,
+                  controller: nomeController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Número da Sala',
+                    labelText: 'Nome da Sala',
                     hintText: 'Ex: 16C',
                     labelStyle: const TextStyle(color: Colors.white),
                     hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
@@ -84,27 +82,7 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: capacityController,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Capacidade (cadeiras)',
-                    hintText: 'Ex: 20',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(color: Colors.orange),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
+                  controller: descricaoController,
                   style: const TextStyle(color: Colors.white),
                   maxLines: 2,
                   decoration: InputDecoration(
@@ -190,23 +168,17 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                 ),
               ),
               onPressed: () async {
-                if (numberController.text.isNotEmpty &&
-                    capacityController.text.isNotEmpty) {
+                if (nomeController.text.isNotEmpty) {
                   try {
-                    final equipment = RoomEquipment(
+                    final response = await BlocksService.createRoom(
+                      blockId: widget.block.id,
+                      nome: nomeController.text,
+                      descricao: descricaoController.text.isEmpty
+                          ? null
+                          : descricaoController.text,
                       hasAirConditioning: hasAirConditioning,
                       hasProjector: hasProjector,
                       hasTV: hasTV,
-                    );
-
-                    final response = await BlocksService.createRoom(
-                      blockId: widget.block.id,
-                      number: numberController.text,
-                      capacity: int.parse(capacityController.text),
-                      description: descriptionController.text.isEmpty
-                          ? null
-                          : descriptionController.text,
-                      equipment: equipment,
                     );
                     
                     if (mounted) {
@@ -233,12 +205,11 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
   }
 
   void _showEditRoomDialog(Room room, int index) {
-    final numberController = TextEditingController(text: room.number);
-    final capacityController = TextEditingController(text: room.capacity.toString());
-    final descriptionController = TextEditingController(text: room.description ?? '');
-    bool hasAirConditioning = room.equipment.hasAirConditioning;
-    bool hasProjector = room.equipment.hasProjector;
-    bool hasTV = room.equipment.hasTV;
+    final nomeController = TextEditingController(text: room.nome);
+    final descricaoController = TextEditingController(text: room.descricao ?? '');
+    bool hasAirConditioning = room.hasAirConditioning;
+    bool hasProjector = room.hasProjector;
+    bool hasTV = room.hasTV;
 
     showDialog(
       context: context,
@@ -254,11 +225,10 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  controller: numberController,
+                  controller: nomeController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Número da Sala',
-                    hintText: 'Ex: 16C',
+                    labelText: 'Nome da Sala',
                     labelStyle: const TextStyle(color: Colors.white),
                     hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
                     enabledBorder: OutlineInputBorder(
@@ -273,27 +243,7 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: capacityController,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Capacidade (cadeiras)',
-                    hintText: 'Ex: 20',
-                    labelStyle: const TextStyle(color: Colors.white),
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: const BorderSide(color: Colors.orange),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
+                  controller: descricaoController,
                   style: const TextStyle(color: Colors.white),
                   maxLines: 2,
                   decoration: InputDecoration(
@@ -379,23 +329,17 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                 ),
               ),
               onPressed: () async {
-                if (numberController.text.isNotEmpty &&
-                    capacityController.text.isNotEmpty) {
+                if (nomeController.text.isNotEmpty) {
                   try {
-                    final equipment = RoomEquipment(
+                    final response = await BlocksService.updateRoom(
+                      roomId: room.id,
+                      nome: nomeController.text,
+                      descricao: descricaoController.text.isEmpty
+                          ? null
+                          : descricaoController.text,
                       hasAirConditioning: hasAirConditioning,
                       hasProjector: hasProjector,
                       hasTV: hasTV,
-                    );
-
-                    final response = await BlocksService.updateRoom(
-                      id: room.id,
-                      number: numberController.text,
-                      capacity: int.parse(capacityController.text),
-                      description: descriptionController.text.isEmpty
-                          ? null
-                          : descriptionController.text,
-                      equipment: equipment,
                     );
                     
                     if (mounted) {
@@ -407,7 +351,7 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erro ao editar sala: $e')),
+                        SnackBar(content: Text('Erro ao atualizar sala: $e')),
                       );
                     }
                   }
@@ -421,17 +365,155 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
     );
   }
 
-  void _showDeleteRoomDialog(Room room, int index) {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF3E8B68), Color(0xFF1E453E)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // AppBar customizada
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Text(
+                      'Salas - ${widget.block.name}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Lista de salas
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+                    : ListView.builder(
+                        itemCount: rooms.length,
+                        padding: const EdgeInsets.all(16),
+                        itemBuilder: (context, index) {
+                          final room = rooms[index];
+                          return Card(
+                            color: Colors.grey[850],
+                            margin: const EdgeInsets.only(bottom: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ListTile(
+                                  title: Text(
+                                    room.nome,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      if (room.descricao != null)
+                                        Text(
+                                          room.descricao!,
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.7),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, color: Colors.orange),
+                                        onPressed: () => _showEditRoomDialog(room, index),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () => _showDeleteConfirmationDialog(room, index),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (room.hasAirConditioning || room.hasProjector || room.hasTV)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                    child: Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        if (room.hasAirConditioning)
+                                          Chip(
+                                            backgroundColor: Colors.blue.withOpacity(0.2),
+                                            label: const Text(
+                                              'Ar Condicionado',
+                                              style: TextStyle(color: Colors.white),
+                                            ),
+                                          ),
+                                        if (room.hasProjector)
+                                          Chip(
+                                            backgroundColor: Colors.green.withOpacity(0.2),
+                                            label: const Text(
+                                              'Projetor',
+                                              style: TextStyle(color: Colors.white),
+                                            ),
+                                          ),
+                                        if (room.hasTV)
+                                          Chip(
+                                            backgroundColor: Colors.purple.withOpacity(0.2),
+                                            label: const Text(
+                                              'TV',
+                                              style: TextStyle(color: Colors.white),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddRoomDialog,
+        backgroundColor: Colors.orange,
+        child: const Icon(Icons.add, color: Colors.black),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(Room room, int index) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey[900],
         title: const Text(
-          'Excluir Sala',
+          'Confirmar Exclusão',
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Tem certeza que deseja excluir a sala ${room.number}?\nEsta ação não pode ser desfeita.',
+          'Tem certeza que deseja excluir a sala ${room.nome}?\nEsta ação não pode ser desfeita.',
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
@@ -444,9 +526,6 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
             ),
             onPressed: () async {
               try {
@@ -457,7 +536,7 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
                   });
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sala excluída com sucesso!')),
+                    const SnackBar(content: Text('Sala excluída com sucesso')),
                   );
                 }
               } catch (e) {
@@ -471,145 +550,6 @@ class _RoomsManagementScreenState extends State<RoomsManagementScreen> {
             child: const Text('Excluir'),
           ),
         ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Fundo com imagem
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/tela.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          
-          // Conteúdo
-          SafeArea(
-            child: Column(
-              children: [
-                // AppBar customizada
-                Container(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Text(
-                        'Salas - ${widget.block.name}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Lista de salas
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: ListView.builder(
-                            itemCount: rooms.length,
-                            itemBuilder: (context, index) {
-                              final room = rooms[index];
-                              return Card(
-                                color: Colors.grey[850],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                    'Sala ${room.number}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Capacidade: ${room.capacity} alunos',
-                                        style: TextStyle(color: Colors.white.withOpacity(0.7)),
-                                      ),
-                                      if (room.description != null && room.description!.isNotEmpty)
-                                        Text(
-                                          room.description!,
-                                          style: TextStyle(color: Colors.white.withOpacity(0.7)),
-                                        ),
-                                      const SizedBox(height: 8),
-                                      Wrap(
-                                        spacing: 8,
-                                        children: [
-                                          if (room.equipment.hasAirConditioning)
-                                            Chip(
-                                              backgroundColor: Colors.blue.withOpacity(0.2),
-                                              label: const Text(
-                                                'Ar Condicionado',
-                                                style: TextStyle(color: Colors.white),
-                                              ),
-                                            ),
-                                          if (room.equipment.hasProjector)
-                                            Chip(
-                                              backgroundColor: Colors.green.withOpacity(0.2),
-                                              label: const Text(
-                                                'Projetor',
-                                                style: TextStyle(color: Colors.white),
-                                              ),
-                                            ),
-                                          if (room.equipment.hasTV)
-                                            Chip(
-                                              backgroundColor: Colors.purple.withOpacity(0.2),
-                                              label: const Text(
-                                                'TV',
-                                                style: TextStyle(color: Colors.white),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, color: Colors.orange),
-                                        onPressed: () => _showEditRoomDialog(room, index),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red),
-                                        onPressed: () => _showDeleteRoomDialog(room, index),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddRoomDialog,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add, color: Colors.black),
       ),
     );
   }

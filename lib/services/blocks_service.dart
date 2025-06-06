@@ -69,7 +69,7 @@ class BlocksService {
         .from('rooms')
         .select('*')
         .eq('block_id', blockId)
-        .order('number');
+        .order('nome');
     
     return List<Map<String, dynamic>>.from(response);
   }
@@ -77,19 +77,21 @@ class BlocksService {
   // Criar uma nova sala
   static Future<Map<String, dynamic>> createRoom({
     required int blockId,
-    required String number,
-    required int capacity,
-    String? description,
-    RoomEquipment? equipment,
+    required String nome,
+    String? descricao,
+    bool hasAirConditioning = false,
+    bool hasProjector = false,
+    bool hasTV = false,
   }) async {
     final response = await _supabase
         .from('rooms')
         .insert({
           'block_id': blockId,
-          'number': number,
-          'capacity': capacity,
-          'description': description,
-          'equipment': (equipment ?? RoomEquipment()).toJson(),
+          'nome': nome,
+          'descricao': descricao,
+          'has_air_conditioning': hasAirConditioning,
+          'has_projector': hasProjector,
+          'has_tv': hasTV,
         })
         .select()
         .single();
@@ -99,21 +101,23 @@ class BlocksService {
 
   // Atualizar uma sala
   static Future<Map<String, dynamic>> updateRoom({
-    required int id,
-    required String number,
-    required int capacity,
-    String? description,
-    RoomEquipment? equipment,
+    required int roomId,
+    required String nome,
+    String? descricao,
+    bool? hasAirConditioning,
+    bool? hasProjector,
+    bool? hasTV,
   }) async {
     final response = await _supabase
         .from('rooms')
         .update({
-          'number': number,
-          'capacity': capacity,
-          'description': description,
-          'equipment': (equipment ?? RoomEquipment()).toJson(),
+          'nome': nome,
+          'descricao': descricao,
+          'has_air_conditioning': hasAirConditioning,
+          'has_projector': hasProjector,
+          'has_tv': hasTV,
         })
-        .eq('id', id)
+        .eq('id', roomId)
         .select()
         .single();
     
