@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/supabase_service.dart';
+import '../services/supabase_service.dart'; 
 
 class UsersService {
   static final _supabase = SupabaseService.client;
 
-  // Verificar se o usuário atual é administrador
+  // Função para verificar se o usuário atual é administrador (mantida como estava)
   static Future<bool> isAdmin() async {
     try {
       final currentUser = _supabase.auth.currentUser;
@@ -22,7 +22,7 @@ class UsersService {
     }
   }
 
-  // Buscar todos os usuários
+  // Função para buscar todos os usuários (mantida como estava)
   static Future<List<Map<String, dynamic>>> getUsers() async {
     final response = await _supabase
         .from('users')
@@ -51,7 +51,7 @@ class UsersService {
     }).toList();
   }
 
-  // Criar um novo usuário
+  // Função para criar um novo usuário (mantida como estava)
   static Future<AuthResponse> createUser({
     required String name,
     required String email,
@@ -85,7 +85,7 @@ class UsersService {
     }
   }
 
-  // Atualizar um usuário
+  // Função para atualizar um usuário (mantida como estava)
   static Future<Map<String, dynamic>> updateUser({
     required String userId,
     required String name,
@@ -93,7 +93,6 @@ class UsersService {
     required String role,
   }) async {
     try {
-      // Primeiro verificar se o usuário atual é administrador
       final currentUser = _supabase.auth.currentUser;
       if (currentUser == null) {
         throw Exception('Usuário não autenticado');
@@ -109,7 +108,6 @@ class UsersService {
         throw Exception('Apenas administradores podem atualizar usuários');
       }
 
-      // Atualizar na tabela users
       final response = await _supabase
           .from('users')
           .update({
@@ -134,23 +132,27 @@ class UsersService {
     }
   }
 
-  // Deletar um usuário
   static Future<void> deleteUser(String userId) async {
-    if (!await isAdmin()) {
-      throw Exception('Apenas administradores podem excluir usuários');
-    }
-
     try {
-      // Primeiro deletar o registro na tabela users
-      await _supabase
-          .from('users')
-          .delete()
-          .eq('id', userId);
+      // Chama a Edge Function segura no servidor para fazer a exclusão
+      final response = await _supabase.functions.invoke(
+        'delete-user', // Nome exato da sua Edge Function
+        body: {'userId': userId}, // Envia o ID do usuário a ser deletado
+      );
 
-      // Depois deletar o usuário no Auth
-      await _supabase.auth.admin.deleteUser(userId);
+      // A Edge Function nos dirá se houve um erro do lado dela
+      if (response.status != 200) {
+        final Map<String, dynamic> responseData = response.data;
+        // Lança uma exceção com a mensagem de erro vinda da função
+        throw Exception(responseData['error'] ?? 'Erro desconhecido ao executar a função no servidor.');
+      }
+      
+      // Se chegou aqui, a função foi executada com sucesso no servidor.
+      print('A função para deletar o usuário foi chamada com sucesso.');
+
     } catch (e) {
-      throw Exception('Erro ao deletar usuário: ${e.toString()}');
+      // Propaga o erro para a UI (sua tela) poder mostrar o SnackBar
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }
-} 
+}
