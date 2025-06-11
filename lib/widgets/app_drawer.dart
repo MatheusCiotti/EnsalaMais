@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/technical_area_screen.dart';
 import '../screens/courses_screen.dart';
 import '../screens/users_screen.dart';
+import '../screens/allocation_form_screen.dart';
 import '../services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -129,6 +130,25 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const UsersScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.add_box,
+              color: Colors.orange,
+            ),
+            title: const Text(
+              'Cadastrar Ensalamento',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AllocationFormScreen(),
                 ),
               );
             },

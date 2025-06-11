@@ -132,4 +132,30 @@ class ClassesService {
       throw Exception('Erro ao carregar professores: ${e.toString()}');
     }
   }
+
+  // Criar um registro de ensalamento
+  static Future<void> createEnsalamento({
+    required String classId,
+    required int roomId,
+    required String dayOfWeek,
+    required String timeSlot,
+  }) async {
+    try {
+      await _supabase
+          .from('ensalamentos')
+          .insert({
+            'class_id': classId,
+            'room_id': roomId,
+            'day_of_week': dayOfWeek,
+            'time_slot': timeSlot,
+          });
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw Exception('Esta sala já está ocupada neste dia e horário.');
+      }
+      throw Exception('Erro do banco de dados: ${e.message}');
+    } catch (e) {
+      throw Exception('Erro ao salvar ensalamento: ${e.toString()}');
+    }
+  }
 } 
