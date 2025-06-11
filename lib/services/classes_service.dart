@@ -180,4 +180,39 @@ class ClassesService {
       throw Exception('Erro ao carregar ensalamento completo: ${e.toString()}');
     }
   }
+
+  // NOVA FUNÇÃO para DELETAR um registro de ensalamento
+  static Future<void> deleteEnsalamento(int ensalamentoId) async {
+    try {
+      await _supabase
+        .from('ensalamentos')
+        .delete()
+        .eq('id', ensalamentoId);
+    } catch (e) {
+      throw Exception('Erro ao deletar ensalamento: ${e.toString()}');
+    }
+  }
+
+  // NOVA FUNÇÃO para ATUALIZAR um registro de ensalamento
+  static Future<void> updateEnsalamento({
+    required int ensalamentoId,
+    required String classId,
+    required int roomId,
+    required String dayOfWeek,
+    required String timeSlot,
+  }) async {
+    try {
+      await _supabase
+        .from('ensalamentos')
+        .update({
+          'class_id': classId,
+          'room_id': roomId,
+          'day_of_week': dayOfWeek,
+          'time_slot': timeSlot,
+        })
+        .eq('id', ensalamentoId);
+    } catch (e) {
+      throw Exception('Erro ao atualizar ensalamento: ${e.toString()}');
+    }
+  }
 } 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/class.dart'; // Importe seu modelo de aula
+import '../models/class.dart'; // Certifique-se que o modelo Class está importado
 import '../services/classes_service.dart';
 
 class ScheduleViewScreen extends StatefulWidget {
@@ -14,8 +14,8 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> with SingleTick
   bool _isLoading = true;
   String? _errorMessage;
 
-  // Estrutura para organizar os dados: Dia -> Sala -> Lista de Aulas
-  final Map<String, Map<String, List<Class>>> _scheduleByDayAndRoom = {};
+  // A estrutura agora guarda o Map completo que vem do Supabase
+  final Map<String, List<Map<String, dynamic>>> _scheduleByDay = {};
 
   final List<String> _weekDays = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -31,26 +31,14 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> with SingleTick
     try {
       final fullScheduleData = await ClassesService.getFullSchedule();
       
-      // Processa e agrupa os dados para a UI
-      _scheduleByDayAndRoom.clear();
+      _scheduleByDay.clear();
       for (var item in fullScheduleData) {
         final day = item['day_of_week'];
-        final roomName = item['room']?['nome'] ?? 'Sala Desconhecida';
-        
-        final classObj = Class.fromJson(item['class']);
-
-        _scheduleByDayAndRoom.putIfAbsent(day, () => {});
-        _scheduleByDayAndRoom[day]!.putIfAbsent(roomName, () => []);
-        _scheduleByDayAndRoom[day]![roomName]!.add(classObj);
+        if (day != null) {
+          _scheduleByDay.putIfAbsent(day, () => []);
+          _scheduleByDay[day]!.add(item);
+        }
       }
-
-      // Ordena os horários dentro de cada sala
-      _scheduleByDayAndRoom.forEach((day, roomSchedules) {
-        roomSchedules.forEach((roomName, classes) {
-          classes.sort((a, b) => (a.schedule ?? '').compareTo(b.schedule ?? ''));
-        });
-      });
-
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -83,8 +71,11 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> with SingleTick
               : TabBarView(
                   controller: _tabController,
                   children: _weekDays.map((day) {
-                    final daySchedule = _scheduleByDayAndRoom[day] ?? {};
-                    return ScheduleDayGrid(scheduleForDay: daySchedule);
+                    final daySchedule = _scheduleByDay[day] ?? [];
+                    return ScheduleDayGrid(
+                      scheduleForDay: daySchedule,
+                      onScheduleChange: _loadSchedule, // Passando a função de recarregar
+                    );
                   }).toList(),
                 ),
     );
@@ -93,27 +84,40 @@ class _ScheduleViewScreenState extends State<ScheduleViewScreen> with SingleTick
 
 // Widget auxiliar para construir a grade de um dia
 class ScheduleDayGrid extends StatelessWidget {
-  final Map<String, List<Class>> scheduleForDay;
+  final List<Map<String, dynamic>> scheduleForDay;
+  final Future<void> Function() onScheduleChange;
 
-  const ScheduleDayGrid({super.key, required this.scheduleForDay});
+  const ScheduleDayGrid({
+    super.key, 
+    required this.scheduleForDay,
+    required this.onScheduleChange,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (scheduleForDay.isEmpty) {
       return const Center(child: Text('Nenhuma aula alocada para este dia.'));
     }
+
+    // Agrupa as aulas por sala
+    final Map<String, List<Map<String, dynamic>>> scheduleByRoom = {};
+    for (var item in scheduleForDay) {
+      final roomName = item['room']?['nome'] ?? 'Sala Desconhecida';
+      scheduleByRoom.putIfAbsent(roomName, () => []);
+      scheduleByRoom[roomName]!.add(item);
+    }
     
-    final sortedRoomNames = scheduleForDay.keys.toList()..sort();
+    final sortedRoomNames = scheduleByRoom.keys.toList()..sort();
 
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
       itemCount: sortedRoomNames.length,
       itemBuilder: (context, index) {
         final roomName = sortedRoomNames[index];
-        final classesInRoom = scheduleForDay[roomName]!;
+        final itemsInRoom = scheduleByRoom[roomName]!;
+        itemsInRoom.sort((a, b) => (a['time_slot'] as String).compareTo(b['time_slot'] as String));
 
         return Card(
-          elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -122,19 +126,60 @@ class ScheduleDayGrid extends StatelessWidget {
               children: [
                 Text(roomName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                 const Divider(height: 20),
-                ...classesInRoom.map((classItem) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${classItem.schedule}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text('${classItem.name} (${classItem.courseName ?? 'Curso não especificado'})'),
-                        Text('Professor: ${classItem.professorName ?? "Não definido"}', style: const TextStyle(fontStyle: FontStyle.italic)),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                Column(
+                  children: itemsInRoom.map((item) {
+                    // Conversão para objeto Class feita aqui, no momento do uso
+                    final classItem = Class.fromJson(item['class']); 
+                    final timeSlot = item['time_slot'];
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('$timeSlot: ${classItem.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text('${classItem.courseName ?? 'Curso não definido'}\nProfessor: ${classItem.professorName ?? "Não definido"}'),
+                      isThreeLine: true,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_note, color: Colors.blue),
+                            tooltip: 'Editar (a implementar)',
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Funcionalidade de editar a ser implementada.')));
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            tooltip: 'Excluir Alocação',
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Confirmar Exclusão'),
+                                  content: Text('Deseja realmente remover a aula "${classItem.name}" deste horário?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                                    TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Excluir')),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true && context.mounted) {
+                                try {
+                                  // Usa o ID do registro de 'ensalamentos', que está no nível principal do 'item'
+                                  await ClassesService.deleteEnsalamento(item['id']);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alocação removida!'), backgroundColor: Colors.green));
+                                  await onScheduleChange(); 
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red));
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
