@@ -158,4 +158,26 @@ class ClassesService {
       throw Exception('Erro ao salvar ensalamento: ${e.toString()}');
     }
   }
+
+  // Buscar a grade de ensalamento completa, incluindo detalhes da aula, professor, sala e curso
+  static Future<List<Map<String, dynamic>>> getFullSchedule() async {
+    try {
+      final response = await _supabase
+        .from('ensalamentos')
+        .select('''
+          *,
+          room:rooms(*),
+          class:classes!inner(
+            *,
+            professor:users(name),
+            course_classes!inner(
+              courses(name)
+            )
+          )
+        ''');
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      throw Exception('Erro ao carregar ensalamento completo: ${e.toString()}');
+    }
+  }
 } 

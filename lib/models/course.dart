@@ -24,26 +24,21 @@ class Course {
   // ===== FACTORY CORRIGIDO E SEGURO =====
   // Esta é a única parte que foi significativamente alterada.
   factory Course.fromJson(Map<String, dynamic> json) {
-    // Função auxiliar para extrair o valor, seja ele um item de lista ou um valor direto.
-    // Isso resolve o problema dos colchetes [].
+    // Função auxiliar para extrair o valor, seja de uma lista ou direto
     dynamic _extractValue(dynamic value) {
       return (value is List && value.isNotEmpty) ? value.first : value;
     }
 
+    // Usamos a função auxiliar em todos os campos que podem ter o problema
     return Course(
-      // Adicionamos 'as int', 'as String', etc., para garantir a segurança dos tipos.
       id: _extractValue(json['id']) as int,
       name: _extractValue(json['name']) as String,
       semester: _extractValue(json['semester']) as int,
       period: _extractValue(json['period']) as String,
       coordinator: _extractValue(json['coordinator']) as String,
       duration: _extractValue(json['duration']) as int,
-      
-      // O campo description já é anulável, então o tratamento é mais simples.
-      description: json['description'] as String?,
-      
-      // Usamos tryParse para evitar erros se a data vier em formato incorreto ou nula.
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+      description: _extractValue(json['description']) as String?,
+      createdAt: DateTime.tryParse(_extractValue(json['created_at'])?.toString() ?? '') ?? DateTime.now(),
     );
   }
 

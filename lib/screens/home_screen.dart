@@ -5,6 +5,7 @@ import '../services/supabase_service.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../widgets/app_drawer.dart';
+import 'schedule_view_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -181,7 +182,7 @@ Future<void> _loadAulas() async {
 
                   const SizedBox(height: 20),
 
-Expanded(
+                  Expanded(
   child: _isLoadingAulas
       ? const Center(child: CircularProgressIndicator())
       : _aulas.isEmpty

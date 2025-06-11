@@ -3,6 +3,7 @@ import '../screens/technical_area_screen.dart';
 import '../screens/courses_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/allocation_form_screen.dart';
+import '../screens/schedule_view_screen.dart';
 import '../services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -150,6 +151,17 @@ class AppDrawer extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) => const AllocationFormScreen(),
                 ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_view_week_outlined, color: Colors.orange),
+            title: const Text('Ver Ensalamento', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ScheduleViewScreen()),
               );
             },
           ),
