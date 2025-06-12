@@ -161,18 +161,7 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
                       items: _availableClasses.map((aula) {
                         return DropdownMenuItem(
                           value: aula.id,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(aula.name ?? 'Aula sem nome', overflow: TextOverflow.ellipsis),
-                              Text(
-                                'Prof: ${aula.professorName ?? 'Não definido'}',
-                                style: const TextStyle(fontSize: 12, color: Colors.white70),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                          child: Text(aula.name ?? 'Aula sem nome', overflow: TextOverflow.ellipsis),
                         );
                       }).toList(),
                       onChanged: _selectedCourseId == null ? null : (value) => setState(() => _selectedClassId = value),
@@ -228,7 +217,7 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
                     _isSearchingRooms
                         ? const Center(child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator()))
                         : SizedBox(
-                            height: 150,
+                            height: 200,
                             child: _availableRoomsForSlot.isEmpty
                                 ? Center(child: Text('Nenhuma sala disponível ou selecione um dia e horário.', style: TextStyle(color: Colors.white70)))
                                 : ListView.builder(
@@ -243,13 +232,37 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
                                           elevation: isSelected ? 8 : 2,
                                           color: isSelected ? Colors.orange.shade200 : Colors.grey[850],
                                           child: Container(
-                                            width: 220,
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                              Text(room.nome ?? '', style: TextStyle(color: isSelected ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                              const Divider(),
-                                              Text('Capacidade: ${room.chairCount}', style: TextStyle(color: isSelected ? Colors.black87 : Colors.white70)),
-                                            ]),
+                                            width: 270,
+                                            padding: const EdgeInsets.all(10.0),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(room.nome ?? '', style: TextStyle(color: isSelected ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                                const Divider(),
+                                                Text('Capacidade: ${room.chairCount}', style: TextStyle(color: isSelected ? Colors.black87 : Colors.white70, fontSize: 13)),
+                                                const SizedBox(height: 4),
+                                                Wrap(
+                                                  spacing: 6.0,
+                                                  runSpacing: 4.0,
+                                                  children: [
+                                                    if (room.chairCount > 0)
+                                                      InfoTag(icon: Icons.chair_alt, label: '${room.chairCount} Cadeiras', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                    if (room.pcdChairCount > 0)
+                                                      InfoTag(icon: Icons.accessible, label: '${room.pcdChairCount} PCD', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                    if (room.leftHandedChairCount > 0)
+                                                      InfoTag(icon: Icons.edit_note, label: '${room.leftHandedChairCount} Canhotos', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                    if (room.hasAirConditioning)
+                                                      InfoTag(icon: Icons.ac_unit, label: 'Ar Cond.', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                    if (room.hasProjector)
+                                                      InfoTag(icon: Icons.videocam, label: 'Projetor', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                    if (room.hasTV)
+                                                      InfoTag(icon: Icons.tv, label: 'TV', textColor: isSelected ? Colors.black : Colors.white, fontSize: 13, iconSize: 16, background: isSelected ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.08)),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       );
@@ -273,6 +286,24 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget InfoTag({required IconData icon, required String label, Color textColor = Colors.white, double fontSize = 13, double iconSize = 16, Color? background}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background ?? Colors.black.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.orangeAccent, size: iconSize),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: textColor, fontSize: fontSize)),
+        ],
+      ),
     );
   }
 }

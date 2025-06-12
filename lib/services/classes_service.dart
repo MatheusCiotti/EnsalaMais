@@ -132,17 +132,8 @@ class ClassesService {
     try {
       final response = await _supabase
         .from('ensalamentos')
-        .select('''
-          *,
-          room:rooms(*),
-          class:classes!inner(
-            *,
-            professor:users(name),
-            course_classes!inner(
-              courses(name, semester)
-            )
-          )
-        ''');
+        .select('*, room:rooms(*)');
+      print('DADOS QUE CHEGARAM DO SUPABASE: ' + response.toString());
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       throw Exception('Erro ao carregar ensalamento completo: ${e.toString()}');

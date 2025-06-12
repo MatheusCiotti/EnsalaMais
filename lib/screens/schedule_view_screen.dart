@@ -169,7 +169,30 @@ class ScheduleDayGrid extends StatelessWidget {
   Widget _buildScheduleRow(BuildContext context, Map<String, dynamic> item) {
     final classItem = Class.fromJson(item['class']);
     final timeSlot = item['time_slot'];
+    final infoDaSala = item['room'];
 
+    // Verificação de segurança para sala nula
+    if (infoDaSala == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: const [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Text('SALA NÃO DEFINIDA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Se chegou aqui, infoDaSala não é nulo
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -182,12 +205,12 @@ class ScheduleDayGrid extends StatelessWidget {
           Expanded(
             flex: 7,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(classItem.name ?? 'Aula sem nome', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 if (classItem.courseName != null)
                   Text(
-                    // Mostra o semestre junto com o nome do curso
                     '${classItem.courseName}${classItem.courseSemester != null ? ' - ${classItem.courseSemester}º Semestre' : ''}',
                     style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
                   ),
@@ -196,10 +219,32 @@ class ScheduleDayGrid extends StatelessWidget {
                     'Prof: ${classItem.professorName}',
                     style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontStyle: FontStyle.italic),
                   ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: [
+                        if (infoDaSala['chair_count'] != null && infoDaSala['chair_count'] > 0)
+                          InfoTag(icon: Icons.chair_alt, label: '${infoDaSala['chair_count']} Cadeiras'),
+                        if (infoDaSala['pcd_chair_count'] != null && infoDaSala['pcd_chair_count'] > 0)
+                          InfoTag(icon: Icons.accessible, label: '${infoDaSala['pcd_chair_count']} PCD'),
+                        if (infoDaSala['left_handed_chair_count'] != null && infoDaSala['left_handed_chair_count'] > 0)
+                          InfoTag(icon: Icons.edit_note, label: '${infoDaSala['left_handed_chair_count']} Canhotos'),
+                        if (infoDaSala['has_air_conditioning'] == true)
+                          InfoTag(icon: Icons.ac_unit, label: 'Ar Cond.'),
+                        if (infoDaSala['has_projector'] == true)
+                          InfoTag(icon: Icons.videocam, label: 'Projetor'),
+                        if (infoDaSala['has_tv'] == true)
+                          InfoTag(icon: Icons.tv, label: 'TV'),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          // Botão de editar
           IconButton(
             icon: const Icon(Icons.edit_note, color: Colors.blueAccent),
             tooltip: 'Editar Alocação',
@@ -246,4 +291,23 @@ class ScheduleDayGrid extends StatelessWidget {
       ),
     );
   }
+}
+
+// Widget auxiliar para exibir uma tag de informação
+Widget InfoTag({required IconData icon, required String label}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.black.withOpacity(0.5),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: Colors.orangeAccent, size: 18),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+      ],
+    ),
+  );
 } 

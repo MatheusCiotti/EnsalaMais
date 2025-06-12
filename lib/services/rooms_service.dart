@@ -7,10 +7,11 @@ class RoomsService {
 
   static Future<List<Map<String, dynamic>>> getRooms() async {
     try {
-      final response = await _supabase.from('rooms').select();
+      // Busca todos os campos relevantes da tabela rooms
+      final response = await _supabase.from('rooms').select('*');
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      throw Exception('Erro ao carregar as salas: [${e.toString()}');
+      throw Exception('Erro ao carregar as salas: \u001b[${e.toString()}');
     }
   }
 
