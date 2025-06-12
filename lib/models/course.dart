@@ -24,6 +24,8 @@ class Course {
   // ===== FACTORY CORRIGIDO E SEGURO =====
   // Esta é a única parte que foi significativamente alterada.
   factory Course.fromJson(Map<String, dynamic> json) {
+    // ===== ADICIONE ESTA LINHA PARA DEPURAR =====
+    print("--- PROCESSANDO JSON DO CURSO: $json ---");
     // Função auxiliar para extrair o valor, seja de uma lista ou direto
     dynamic _extractValue(dynamic value) {
       return (value is List && value.isNotEmpty) ? value.first : value;

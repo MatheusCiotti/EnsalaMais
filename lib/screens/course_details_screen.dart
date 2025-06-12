@@ -4,7 +4,6 @@ import '../models/course.dart';
 import '../services/courses_service.dart';
 
 class CourseDetailsScreen extends StatefulWidget {
-  // Recebe o ID do curso da tela anterior
   final int courseId;
 
   const CourseDetailsScreen({super.key, required this.courseId});
@@ -25,17 +24,22 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     _loadDetails();
   }
 
+  // LÓGICA DE CARREGAMENTO OTIMIZADA
   Future<void> _loadDetails() async {
     try {
       // Busca os detalhes do curso e a lista de aulas em paralelo
       final results = await Future.wait([
-        // Suposição: CoursesService.getCourses() busca todos. Filtramos aqui.
-        CoursesService.getCourses(),
+        // Modifique seu CoursesService para ter uma função getCourseById
+        // Por enquanto, vamos manter a lógica de filtro
+        CoursesService.getCourses(), 
         CoursesService.getClassesForCourse(widget.courseId),
       ]);
 
       final allCourses = results[0] as List<Map<String, dynamic>>;
-      final specificCourseData = allCourses.firstWhere((c) => c['id'] == widget.courseId, orElse: () => {});
+      final specificCourseData = allCourses.firstWhere(
+        (c) => c['id'] == widget.courseId,
+        orElse: () => {},
+      );
 
       if (mounted) {
         setState(() {
@@ -68,7 +72,6 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // AppBar customizado
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
@@ -91,7 +94,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator(color: Colors.white))
                       : _errorMessage != null
-                          ? Center(child: Text('Erro: [$_errorMessage', style: const TextStyle(color: Colors.red, fontSize: 16)))
+                          ? Center(child: Text('Erro: $_errorMessage', style: const TextStyle(color: Colors.red, fontSize: 16)))
                           : buildCourseDetails(),
                 ),
               ],
@@ -102,6 +105,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
+  // ===== WIDGET DE DETALHES CORRIGIDO =====
   Widget buildCourseDetails() {
     if (_course == null) {
       return const Center(child: Text('Curso não encontrado.', style: TextStyle(color: Colors.white)));
@@ -113,9 +117,10 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
-          Text('Coordenador: [${_course!.coordinator ?? "Não informado"}', style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          // CORREÇÃO: Usando a interpolação de string padrão do Dart
+          Text('Coordenador: ${_course!.coordinator}', style: const TextStyle(color: Colors.white70, fontSize: 16)),
           const SizedBox(height: 4),
-          Text('[${_course!.semester}º Semestre - [${_course!.period}', style: const TextStyle(color: Colors.white70)),
+          Text('${_course!.semester}º Semestre - ${_course!.period}', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 16),
           const Divider(color: Colors.white30),
           const SizedBox(height: 16),
@@ -144,4 +149,4 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
       ),
     );
   }
-} 
+}

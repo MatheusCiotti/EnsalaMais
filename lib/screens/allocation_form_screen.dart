@@ -159,15 +159,19 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
                       dropdownColor: Colors.grey[850],
                       decoration: _inputDecoration('Aula'),
                       items: _availableClasses.map((aula) {
-                        // Construímos o texto de forma segura ANTES de passar para o widget Text
-                        final semesterText = aula.courseSemester != null ? ' (${aula.courseSemester}º Sem)' : '';
-                        final displayText = '${aula.name ?? "Aula sem nome"}$semesterText';
-
                         return DropdownMenuItem(
                           value: aula.id,
-                          child: Text(
-                            displayText, // Passamos a string já garantida como não-nula
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(aula.name ?? 'Aula sem nome', overflow: TextOverflow.ellipsis),
+                              Text(
+                                'Prof: ${aula.professorName ?? 'Não definido'}',
+                                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
