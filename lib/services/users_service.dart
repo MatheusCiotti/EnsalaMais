@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/supabase_service.dart'; 
+import '../models/user.dart' as app_user; // Importe o modelo User com o apelido app_user
+import '../services/supabase_service.dart';
 
 class UsersService {
   static final _supabase = SupabaseService.client;
@@ -22,33 +23,23 @@ class UsersService {
     }
   }
 
-  // Função para buscar todos os usuários (mantida como estava)
-  static Future<List<Map<String, dynamic>>> getUsers() async {
-    final response = await _supabase
-        .from('users')
-        .select('''
-          id,
-          name,
-          email,
-          role,
-          created_at
-        ''')
-        .order('name');
-    
-    // Converter a resposta para o formato esperado
-    return response.map<Map<String, dynamic>>((user) {
-      return {
-        'id': user['id'],
-        'name': user['name'],
-        'email': user['email'],
-        'role': user['role'],
-        'created_at': user['created_at'],
-        'raw_user_meta_data': {
-          'name': user['name'],
-          'role': user['role'],
-        },
-      };
-    }).toList();
+  // Função GETUSERS ATUALIZADA para aceitar um filtro de role
+  static Future<List<app_user.User>> getUsers({String? role}) async {
+    try {
+      var query = _supabase.from('users').select();
+
+      // Se um 'role' for fornecido (e não for 'Todos'), adiciona o filtro
+      if (role != null && role != 'Todos') {
+        query = query.eq('role', role);
+      }
+
+      final response = await query.order('name', ascending: true);
+      
+      return response.map((json) => app_user.User.fromJson(json)).toList();
+
+    } catch (e) {
+      throw Exception('Erro ao carregar usuários: ${e.toString()}');
+    }
   }
 
   // Função para criar um novo usuário (mantida como estava)
@@ -85,7 +76,7 @@ class UsersService {
     }
   }
 
-  // Função para atualizar um usuário (mantida como estava)
+  // Função UPDATEUSER revisada para consistência
   static Future<Map<String, dynamic>> updateUser({
     required String userId,
     required String name,
@@ -93,41 +84,14 @@ class UsersService {
     required String role,
   }) async {
     try {
-      final currentUser = _supabase.auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('Usuário não autenticado');
-      }
-
-      final adminCheck = await _supabase
-          .from('users')
-          .select('role')
-          .eq('id', currentUser.id)
-          .single();
-
-      if (adminCheck['role'] != 'Administração') {
-        throw Exception('Apenas administradores podem atualizar usuários');
-      }
-
       final response = await _supabase
           .from('users')
-          .update({
-            'name': name,
-            'email': email,
-            'role': role,
-          })
+          .update({'name': name, 'email': email, 'role': role})
           .eq('id', userId)
           .select()
           .single();
-
       return response;
     } catch (e) {
-      if (e.toString().contains('not found')) {
-        throw Exception('Usuário não encontrado');
-      } else if (e.toString().contains('duplicate key')) {
-        throw Exception('Este e-mail já está em uso');
-      } else if (e.toString().contains('permission denied')) {
-        throw Exception('Você não tem permissão para realizar esta operação');
-      }
       throw Exception('Erro ao atualizar usuário: ${e.toString()}');
     }
   }

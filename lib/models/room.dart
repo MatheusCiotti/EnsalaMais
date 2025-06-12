@@ -11,6 +11,11 @@ class Room {
   final bool hasProjector;
   final bool hasTV;
 
+  // NOVOS CAMPOS
+  final int chairCount;
+  final int pcdChairCount;
+  final int leftHandedChairCount;
+
   Room({
     required this.id,
     this.nome,
@@ -19,6 +24,10 @@ class Room {
     required this.hasAirConditioning,
     required this.hasProjector,
     required this.hasTV,
+    // NOVOS CAMPOS
+    required this.chairCount,
+    required this.pcdChairCount,
+    required this.leftHandedChairCount,
   });
 
   // Construtor factory corrigido para ser à prova de falhas
@@ -36,6 +45,11 @@ class Room {
       hasAirConditioning: json['has_air_conditioning'] as bool? ?? false,
       hasProjector: json['has_projector'] as bool? ?? false,
       hasTV: json['has_tv'] as bool? ?? false,
+      
+      // NOVOS CAMPOS (com valor padrão 0 para segurança)
+      chairCount: json['chair_count'] as int? ?? 0,
+      pcdChairCount: json['pcd_chair_count'] as int? ?? 0,
+      leftHandedChairCount: json['left_handed_chair_count'] as int? ?? 0,
     );
   }
 
@@ -53,8 +67,7 @@ class Room {
     };
   }
   
-  // O método copyWith não é estritamente necessário para o erro atual,
-  // mas é uma boa prática mantê-lo atualizado com o modelo.
+  // ===== MÉTODO copyWith CORRIGIDO E COMPLETO =====
   Room copyWith({
     int? id,
     String? nome,
@@ -63,6 +76,9 @@ class Room {
     bool? hasAirConditioning,
     bool? hasProjector,
     bool? hasTV,
+    int? chairCount,
+    int? pcdChairCount,
+    int? leftHandedChairCount,
   }) {
     return Room(
       id: id ?? this.id,
@@ -72,6 +88,9 @@ class Room {
       hasAirConditioning: hasAirConditioning ?? this.hasAirConditioning,
       hasProjector: hasProjector ?? this.hasProjector,
       hasTV: hasTV ?? this.hasTV,
+      chairCount: chairCount ?? this.chairCount,
+      pcdChairCount: pcdChairCount ?? this.pcdChairCount,
+      leftHandedChairCount: leftHandedChairCount ?? this.leftHandedChairCount,
     );
   }
 }

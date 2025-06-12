@@ -79,9 +79,12 @@ class BlocksService {
     required int blockId,
     required String nome,
     String? descricao,
-    bool hasAirConditioning = false,
-    bool hasProjector = false,
-    bool hasTV = false,
+    required bool hasAirConditioning,
+    required bool hasProjector,
+    required bool hasTV,
+    required int chairCount,
+    required int pcdChairCount,
+    required int leftHandedChairCount,
   }) async {
     final response = await _supabase
         .from('rooms')
@@ -92,6 +95,9 @@ class BlocksService {
           'has_air_conditioning': hasAirConditioning,
           'has_projector': hasProjector,
           'has_tv': hasTV,
+          'chair_count': chairCount,
+          'pcd_chair_count': pcdChairCount,
+          'left_handed_chair_count': leftHandedChairCount,
         })
         .select()
         .single();
@@ -104,9 +110,12 @@ class BlocksService {
     required int roomId,
     required String nome,
     String? descricao,
-    bool? hasAirConditioning,
-    bool? hasProjector,
-    bool? hasTV,
+    required bool hasAirConditioning,
+    required bool hasProjector,
+    required bool hasTV,
+    required int chairCount,
+    required int pcdChairCount,
+    required int leftHandedChairCount,
   }) async {
     final response = await _supabase
         .from('rooms')
@@ -116,6 +125,9 @@ class BlocksService {
           'has_air_conditioning': hasAirConditioning,
           'has_projector': hasProjector,
           'has_tv': hasTV,
+          'chair_count': chairCount,
+          'pcd_chair_count': pcdChairCount,
+          'left_handed_chair_count': leftHandedChairCount,
         })
         .eq('id', roomId)
         .select()

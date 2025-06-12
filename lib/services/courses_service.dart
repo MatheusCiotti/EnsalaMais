@@ -18,7 +18,7 @@ class CoursesService {
   }
 
   // Atualizar um curso
-  static Future<Map<String, dynamic>> updateCourse({
+  static Future<void> updateCourseWithClasses({
     required int id,
     required String name,
     required int semester,
@@ -26,22 +26,22 @@ class CoursesService {
     required String coordinator,
     required int duration,
     String? description,
+    required List<String> classIds, // Recebe a nova lista de aulas
   }) async {
-    final response = await _supabase
-        .from('courses')
-        .update({
-          'name': name,
-          'semester': semester,
-          'period': period,
-          'coordinator': coordinator,
-          'duration': duration,
-          'description': description,
-        })
-        .eq('id', id)
-        .select()
-        .single();
-    
-    return response;
+    try {
+      await _supabase.rpc('update_course_with_classes', params: {
+        'course_id_to_update': id,
+        'course_name': name,
+        'course_semester': semester,
+        'course_period': period,
+        'course_coordinator': coordinator,
+        'course_duration': duration,
+        'course_description': description,
+        'class_ids': classIds,
+      });
+    } catch (e) {
+      throw Exception('Erro ao atualizar curso via RPC: [${e.toString()}');
+    }
   }
 
   // Deletar um curso
@@ -101,29 +101,34 @@ class CoursesService {
   // Para buscar as aulas de um curso específico
   static Future<List<Class>> getClassesForCourse(int courseId) async {
     try {
-      // Busca na tabela de ligação 'course_classes'
+      // Consulta corrigida para buscar a classe e os detalhes do curso ao qual ela pertence
       final response = await _supabase
           .from('course_classes')
-          // Pede para trazer todos os dados (*) da tabela 'classes' relacionada
-          .select('classes(*)') 
+          .select('''
+            classes!inner(*, professor:users(name)),
+            courses!inner(semester)
+          ''')
           .eq('course_id', courseId);
 
-      // A resposta virá como uma lista de: [{'classes': { ...dados da aula... }}]
       if (response.isEmpty) {
         return [];
       }
 
-      // Extrai o objeto 'classes' de dentro de cada item.
-      final classDataList = response.map((item) {
-        // Verificação de segurança para o caso de 'classes' ser nulo
-        return item['classes'] as Map<String, dynamic>?;
-      }).where((item) => item != null).toList(); // Filtra qualquer item nulo
-      
-      // Agora convertemos a lista de dados de aulas para uma lista de objetos Class
-      return classDataList.map<Class>((json) => Class.fromJson(json!)).toList();
+      // Agora processamos a resposta para combinar os dados
+      return response.map<Class>((item) {
+        // Pega os dados da aula
+        final classData = item['classes'] as Map<String, dynamic>;
+        // Pega os dados do curso (que agora contém o semestre)
+        final courseData = item['courses'] as Map<String, dynamic>?;
+
+        // Adiciona manualmente o semestre aos dados da aula antes de converter
+        classData['courseSemester'] = courseData?['semester'];
+        
+        return Class.fromJson(classData);
+      }).toList();
 
     } catch (e) {
-      throw Exception('Erro ao carregar as aulas do curso: [${e.toString()}');
+      throw Exception('Erro ao carregar as aulas do curso: ${e.toString()}');
     }
   }
 }

@@ -28,13 +28,11 @@ class ClassesService {
     }
   }
 
-  // Criar uma nova aula
+  // Criar uma nova aula (versão simplificada)
   static Future<Class> createClass({
     required String name,
     required String professorId,
     String? observation,
-    required String schedule,
-    required int roomId,
   }) async {
     try {
       final response = await _supabase
@@ -43,37 +41,21 @@ class ClassesService {
             'name': name,
             'professor_id': professorId,
             'observation': observation,
-            'schedule': schedule,
-            'room_id': roomId,
           })
-          .select('''
-            *,
-            professor:users!professor_id(name),
-            room:rooms!room_id(nome)
-          ''')
+          .select()
           .single();
-
-      // Adicionar os nomes do professor e sala ao JSON
-      response['professor_name'] = response['professor']?['name'];
-      response['room_name'] = response['room']?['nome'];
-      
       return Class.fromJson(response);
     } catch (e) {
-      if (e.toString().contains('foreign key constraint')) {
-        throw Exception('Professor ou sala não encontrados');
-      }
       throw Exception('Erro ao criar aula: ${e.toString()}');
     }
   }
 
-  // Atualizar uma aula
+  // Atualizar uma aula (versão simplificada)
   static Future<Class> updateClass({
     required String id,
     required String name,
     required String professorId,
     String? observation,
-    required String schedule,
-    required int roomId,
   }) async {
     try {
       final response = await _supabase
@@ -82,26 +64,12 @@ class ClassesService {
             'name': name,
             'professor_id': professorId,
             'observation': observation,
-            'schedule': schedule,
-            'room_id': roomId,
           })
           .eq('id', id)
-          .select('''
-            *,
-            professor:users!professor_id(name),
-            room:rooms!room_id(nome)
-          ''')
+          .select()
           .single();
-
-      // Adicionar os nomes do professor e sala ao JSON
-      response['professor_name'] = response['professor']?['name'];
-      response['room_name'] = response['room']?['nome'];
-      
       return Class.fromJson(response);
     } catch (e) {
-      if (e.toString().contains('foreign key constraint')) {
-        throw Exception('Professor ou sala não encontrados');
-      }
       throw Exception('Erro ao atualizar aula: ${e.toString()}');
     }
   }
@@ -171,7 +139,7 @@ class ClassesService {
             *,
             professor:users(name),
             course_classes!inner(
-              courses(name)
+              courses(name, semester)
             )
           )
         ''');
@@ -211,6 +179,11 @@ class ClassesService {
           'time_slot': timeSlot,
         })
         .eq('id', ensalamentoId);
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw Exception('Esta sala já está ocupada neste dia e horário.');
+      }
+      throw Exception('Erro do banco de dados: ${e.message}');
     } catch (e) {
       throw Exception('Erro ao atualizar ensalamento: ${e.toString()}');
     }

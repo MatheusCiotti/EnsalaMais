@@ -51,16 +51,21 @@ class _ClassesScreenState extends State<ClassesScreen> {
   }
 
   void _showAddClassDialog() async {
-    setState(() { _isLoading = true; });
-    await _loadData();
-
-    final nameController = TextEditingController();
-    final observationController = TextEditingController();
-    final scheduleController = TextEditingController();
-    String? selectedProfessorId;
-    String? selectedRoomId;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Carregando dados do formulário...')));
+    
+    final List<Map<String, dynamic>> availableProfessors;
+    try {
+      availableProfessors = await ClassesService.getAvailableProfessors();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao buscar professores: $e'), backgroundColor: Colors.red));
+      return;
+    }
 
     if (!mounted) return;
+    
+    final nameController = TextEditingController();
+    final observationController = TextEditingController();
+    String? selectedProfessorId;
 
     showDialog(
       context: context,
@@ -69,41 +74,48 @@ class _ClassesScreenState extends State<ClassesScreen> {
           backgroundColor: Colors.grey[900],
           title: const Text('Adicionar Nova Aula', style: TextStyle(color: Colors.white)),
           content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nameController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Nome da Aula', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(value: selectedProfessorId, dropdownColor: Colors.grey[850], style: const TextStyle(color: Colors.white), hint: const Text('Selecione um professor', style: TextStyle(color: Colors.grey)), decoration: InputDecoration(labelText: 'Professor', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange))),
-                items: _availableProfessors.map((p) => DropdownMenuItem<String>(value: p['id'] as String?, child: Text(p['name'] as String? ?? 'Professor s/ nome'))).toList(),
-                onChanged: (v) => setDialogState(() => selectedProfessorId = v),
-              ),
-              const SizedBox(height: 16),
-              TextField(controller: scheduleController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Horário', hintText: 'Ex: Segunda, 10h-12h', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(value: selectedRoomId, dropdownColor: Colors.grey[850], style: const TextStyle(color: Colors.white), hint: const Text('Selecione uma sala', style: TextStyle(color: Colors.grey)), decoration: InputDecoration(labelText: 'Sala', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange))),
-                items: _availableRooms.map((r) => DropdownMenuItem<String>(value: r['id']?.toString(), child: Text(r['nome'] as String? ?? 'Sala s/ nome'))).toList(),
-                onChanged: (v) => setDialogState(() => selectedRoomId = v),
-              ),
-              const SizedBox(height: 16),
-              TextField(controller: observationController, style: const TextStyle(color: Colors.white), maxLines: 3, decoration: InputDecoration(labelText: 'Observação (opcional)', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Nome da Aula', labelStyle: const TextStyle(color: Colors.white))),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedProfessorId,
+                  hint: const Text('Selecione um professor'),
+                  dropdownColor: Colors.grey[850],
+                  items: availableProfessors.map((professor) {
+                    return DropdownMenuItem<String>(
+                      value: professor['id'],
+                      child: Text(professor['name'] ?? 'Professor sem nome', style: const TextStyle(color: Colors.white)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() => selectedProfessorId = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(controller: observationController, style: const TextStyle(color: Colors.white), maxLines: 3, decoration: InputDecoration(labelText: 'Observação (opcional)', labelStyle: const TextStyle(color: Colors.white))),
+              ],
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), style: TextButton.styleFrom(foregroundColor: Colors.white), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
               onPressed: () async {
-                if (nameController.text.isNotEmpty && selectedProfessorId != null && scheduleController.text.isNotEmpty && selectedRoomId != null) {
+                if (nameController.text.isNotEmpty && selectedProfessorId != null) {
                   try {
-                    await ClassesService.createClass(name: nameController.text, professorId: selectedProfessorId!, schedule: scheduleController.text, roomId: int.parse(selectedRoomId!), observation: observationController.text.isNotEmpty ? observationController.text : null);
+                    await ClassesService.createClass(
+                      name: nameController.text,
+                      professorId: selectedProfessorId!,
+                      observation: observationController.text.isNotEmpty ? observationController.text : null,
+                    );
                     if (mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aula criada com sucesso!'), backgroundColor: Colors.green));
                       _loadData();
                     }
                   } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ERRO DETALHADO: ${e.toString()}'), backgroundColor: Colors.red));
-                    }
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao criar aula: $e'), backgroundColor: Colors.red));
                   }
                 }
               },
@@ -115,18 +127,22 @@ class _ClassesScreenState extends State<ClassesScreen> {
     );
   }
 
-  // ===== FUNÇÃO DE EDITAR RESTAURADA E CORRIGIDA =====
   void _showEditClassDialog(Class classItem) async {
-    setState(() { _isLoading = true; });
-    await _loadData();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Carregando dados do formulário...')));
+
+    final List<Map<String, dynamic>> availableProfessors;
+    try {
+      availableProfessors = await ClassesService.getAvailableProfessors();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao buscar professores: $e'), backgroundColor: Colors.red));
+      return;
+    }
+
+    if (!mounted) return;
 
     final nameController = TextEditingController(text: classItem.name);
     final observationController = TextEditingController(text: classItem.observation ?? '');
-    final scheduleController = TextEditingController(text: classItem.schedule ?? '');
     String? selectedProfessorId = classItem.professorId;
-    String? selectedRoomId = classItem.roomId?.toString();
-
-    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -135,41 +151,49 @@ class _ClassesScreenState extends State<ClassesScreen> {
           backgroundColor: Colors.grey[900],
           title: const Text('Editar Aula', style: TextStyle(color: Colors.white)),
           content: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(controller: nameController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Nome da Aula', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(value: selectedProfessorId, dropdownColor: Colors.grey[850], style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Professor', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange))),
-                items: _availableProfessors.map((p) => DropdownMenuItem<String>(value: p['id'] as String?, child: Text(p['name'] as String? ?? 'Professor s/ nome'))).toList(),
-                onChanged: (v) => setDialogState(() => selectedProfessorId = v),
-              ),
-              const SizedBox(height: 16),
-              TextField(controller: scheduleController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Horário', hintText: 'Ex: Segunda, 10h-12h', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(value: selectedRoomId, dropdownColor: Colors.grey[850], style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Sala', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange))),
-                items: _availableRooms.map((r) => DropdownMenuItem<String>(value: r['id']?.toString(), child: Text(r['nome'] as String? ?? 'Sala s/ nome'))).toList(),
-                onChanged: (v) => setDialogState(() => selectedRoomId = v),
-              ),
-              const SizedBox(height: 16),
-              TextField(controller: observationController, style: const TextStyle(color: Colors.white), maxLines: 3, decoration: InputDecoration(labelText: 'Observação (opcional)', labelStyle: const TextStyle(color: Colors.white), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: Colors.white.withOpacity(0.3))), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: Colors.orange)))),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Nome da Aula', labelStyle: const TextStyle(color: Colors.white))),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedProfessorId,
+                  hint: const Text('Selecione um professor'),
+                  dropdownColor: Colors.grey[850],
+                  items: availableProfessors.map((professor) {
+                    return DropdownMenuItem<String>(
+                      value: professor['id'],
+                      child: Text(professor['name'] ?? 'Professor sem nome', style: const TextStyle(color: Colors.white)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() => selectedProfessorId = value);
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(controller: observationController, style: const TextStyle(color: Colors.white), maxLines: 3, decoration: InputDecoration(labelText: 'Observação (opcional)', labelStyle: const TextStyle(color: Colors.white))),
+              ],
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), style: TextButton.styleFrom(foregroundColor: Colors.white), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
               onPressed: () async {
-                if (nameController.text.isNotEmpty && selectedProfessorId != null && scheduleController.text.isNotEmpty && selectedRoomId != null) {
+                if (nameController.text.isNotEmpty && selectedProfessorId != null) {
                   try {
-                    await ClassesService.updateClass(id: classItem.id, name: nameController.text, professorId: selectedProfessorId!, schedule: scheduleController.text, roomId: int.parse(selectedRoomId!), observation: observationController.text.isNotEmpty ? observationController.text : null);
+                    await ClassesService.updateClass(
+                      id: classItem.id,
+                      name: nameController.text,
+                      professorId: selectedProfessorId!,
+                      observation: observationController.text.isNotEmpty ? observationController.text : null,
+                    );
                     if (mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aula atualizada com sucesso!'), backgroundColor: Colors.green));
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aula atualizada com sucesso!'), backgroundColor: Colors.green));
                       _loadData();
                     }
                   } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao atualizar aula: $e'), backgroundColor: Colors.red));
-                    }
+                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao atualizar aula: $e'), backgroundColor: Colors.red));
                   }
                 }
               },
@@ -179,6 +203,12 @@ class _ClassesScreenState extends State<ClassesScreen> {
         ),
       ),
     );
+  }
+
+  // Função para remover códigos de cor ANSI de uma string
+  String cleanAnsiCodes(String text) {
+    final ansiRegex = RegExp(r'[\u001B\u009B][[()#;?]*.{0,2}(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]');
+    return text.replaceAll(ansiRegex, '');
   }
 
   @override
@@ -204,13 +234,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
                             child: ListTile(
                               title: Text(classItem.name ?? 'Aula sem nome', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('Professor: ${classItem.professorName ?? "Não definido"}', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-                                Text('Horário: ${classItem.schedule ?? "Não definido"}', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-                                Text('Sala: ${classItem.roomName ?? "Não definida"}', style: TextStyle(color: Colors.white.withOpacity(0.7))),
+                                Text('Professor: ${cleanAnsiCodes(classItem.professorName ?? "Não definido")}', style: TextStyle(color: Colors.white.withOpacity(0.7))),
                                 if (classItem.observation != null && classItem.observation!.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4.0),
-                                    child: Text('Obs: ${classItem.observation}', style: TextStyle(color: Colors.white.withOpacity(0.7), fontStyle: FontStyle.italic)),
+                                    child: Text('Obs: ${cleanAnsiCodes(classItem.observation!)}', style: TextStyle(color: Colors.white.withOpacity(0.7), fontStyle: FontStyle.italic)),
                                   ),
                               ]),
                               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
