@@ -9,12 +9,50 @@ class CoursesService {
 
   // Buscar todos os cursos
   static Future<List<Map<String, dynamic>>> getCourses() async {
-    final response = await _supabase
-        .from('courses')
-        .select('*')
-        .order('name');
-    
-    return List<Map<String, dynamic>>.from(response);
+    try {
+      final response = await _supabase
+          .from('courses')
+          .select('id, name, semester, period, coordinator, duration, description')
+          .order('name');
+      
+      // Converter e filtrar dados válidos
+      final result = <Map<String, dynamic>>[];
+      for (var item in response) {
+        if (item is Map<String, dynamic>) {
+          // Verificar se os campos obrigatórios não são null
+          if (item['id'] != null && item['name'] != null) {
+            result.add({
+              'id': item['id'],
+              'name': item['name'] ?? 'Curso sem nome',
+              'semester': item['semester'] ?? 1,
+              'period': item['period'] ?? 'Não definido',
+              'coordinator': item['coordinator'] ?? 'Não definido',
+              'duration': item['duration'] ?? 1,
+              'description': item['description'],
+            });
+          }
+        }
+      }
+      
+      return result;
+    } catch (e) {
+      throw Exception('Erro ao carregar cursos: ${e.toString()}');
+    }
+  }
+
+  // Buscar curso por ID
+  static Future<Map<String, dynamic>?> getCourseById(int courseId) async {
+    try {
+      final response = await _supabase
+          .from('courses')
+          .select('*')
+          .eq('id', courseId)
+          .maybeSingle();
+
+      return response;
+    } catch (e) {
+      throw Exception('Erro ao carregar curso: ${e.toString()}');
+    }
   }
 
   // Atualizar um curso

@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart';
 
 class User {
   final String id;
-  final String email;
-  final String name;
-  final String role;
+  final String? name;
+  final String? email;
+  final String? role;
+  final String? funcao;
+  final int? courseId;
   final DateTime createdAt;
 
   // Lista estática de papéis para ser usada em dropdowns
@@ -19,9 +21,11 @@ class User {
 
   User({
     required this.id,
-    required this.email,
-    required this.name,
-    required this.role,
+    this.name,
+    this.email,
+    this.role,
+    this.funcao,
+    this.courseId,
     required this.createdAt,
   });
 
@@ -41,20 +45,12 @@ class User {
 
     return User(
       // Tratamento seguro para cada campo
-      id: json['id'] as String? ?? '',
-      email: json['email'] as String? ?? 'E-mail não informado',
-      
-      // Tenta buscar o nome de 'raw_user_meta_data', se não achar, busca de 'name', se não, usa um padrão.
-      name: getNestedValue<String>(json, ['raw_user_meta_data', 'name']) 
-            ?? json['name'] as String? 
-            ?? 'Usuário sem nome',
-      
-      // Mesma lógica para o 'role'
-      role: getNestedValue<String>(json, ['raw_user_meta_data', 'role'])
-            ?? json['role'] as String?
-            ?? 'Indefinido',
-
-      // Tratamento seguro para a data de criação
+      id: json['id'] as String,
+      name: json['name'] as String?,
+      email: json['email'] as String?,
+      role: json['role'] as String?,
+      funcao: json['funcao'] as String?,
+      courseId: json['course_id'] as int?,
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
     );
   }
@@ -62,9 +58,12 @@ class User {
   // O método toJson não é necessário para esta tela, mas pode ser mantido se for usado em outro lugar
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'email': email,
       'role': role,
+      'funcao': funcao,
+      'course_id': courseId,
     };
   }
 }

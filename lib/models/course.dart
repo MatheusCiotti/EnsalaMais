@@ -22,23 +22,20 @@ class Course {
   });
 
   // ===== FACTORY CORRIGIDO E SEGURO =====
-  // Esta é a única parte que foi significativamente alterada.
   factory Course.fromJson(Map<String, dynamic> json) {
-    // ===== ADICIONE ESTA LINHA PARA DEPURAR =====
-    print("--- PROCESSANDO JSON DO CURSO: $json ---");
     // Função auxiliar para extrair o valor, seja de uma lista ou direto
     dynamic _extractValue(dynamic value) {
       return (value is List && value.isNotEmpty) ? value.first : value;
     }
 
-    // Usamos a função auxiliar em todos os campos que podem ter o problema
+    // Tratamento seguro de valores nulos
     return Course(
-      id: _extractValue(json['id']) as int,
-      name: _extractValue(json['name']) as String,
-      semester: _extractValue(json['semester']) as int,
-      period: _extractValue(json['period']) as String,
-      coordinator: _extractValue(json['coordinator']) as String,
-      duration: _extractValue(json['duration']) as int,
+      id: _extractValue(json['id']) as int? ?? 0,
+      name: _extractValue(json['name']) as String? ?? 'Curso sem nome',
+      semester: _extractValue(json['semester']) as int? ?? 1,
+      period: _extractValue(json['period']) as String? ?? 'Não definido',
+      coordinator: _extractValue(json['coordinator']) as String? ?? 'Não definido',
+      duration: _extractValue(json['duration']) as int? ?? 1,
       description: _extractValue(json['description']) as String?,
       createdAt: DateTime.tryParse(_extractValue(json['created_at'])?.toString() ?? '') ?? DateTime.now(),
     );

@@ -167,9 +167,32 @@ class ScheduleDayGrid extends StatelessWidget {
   }
 
   Widget _buildScheduleRow(BuildContext context, Map<String, dynamic> item) {
-    final classItem = Class.fromJson(item['class']);
     final timeSlot = item['time_slot'];
     final infoDaSala = item['room'];
+    final classData = item['class'];
+
+    // Verificação de segurança para aula nula
+    if (classData == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: const [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Text('AULA NÃO DEFINIDA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final classItem = Class.fromJson(classData);
 
     // Verificação de segurança para sala nula
     if (infoDaSala == null) {
@@ -192,7 +215,7 @@ class ScheduleDayGrid extends StatelessWidget {
       );
     }
 
-    // Se chegou aqui, infoDaSala não é nulo
+    // Se chegou aqui, tanto classData quanto infoDaSala não são nulos
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -223,21 +246,21 @@ class ScheduleDayGrid extends StatelessWidget {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
+                      spacing: 6.0,
+                      runSpacing: 4.0,
                       children: [
                         if (infoDaSala['chair_count'] != null && infoDaSala['chair_count'] > 0)
-                          InfoTag(icon: Icons.chair_alt, label: '${infoDaSala['chair_count']} Cadeiras'),
+                          InfoTag(icon: Icons.chair_alt, label: '${infoDaSala['chair_count']} Cadeiras', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                         if (infoDaSala['pcd_chair_count'] != null && infoDaSala['pcd_chair_count'] > 0)
-                          InfoTag(icon: Icons.accessible, label: '${infoDaSala['pcd_chair_count']} PCD'),
+                          InfoTag(icon: Icons.accessible, label: '${infoDaSala['pcd_chair_count']} PCD', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                         if (infoDaSala['left_handed_chair_count'] != null && infoDaSala['left_handed_chair_count'] > 0)
-                          InfoTag(icon: Icons.edit_note, label: '${infoDaSala['left_handed_chair_count']} Canhotos'),
+                          InfoTag(icon: Icons.edit_note, label: '${infoDaSala['left_handed_chair_count']} Canhotos', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                         if (infoDaSala['has_air_conditioning'] == true)
-                          InfoTag(icon: Icons.ac_unit, label: 'Ar Cond.'),
+                          InfoTag(icon: Icons.ac_unit, label: 'Ar Cond.', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                         if (infoDaSala['has_projector'] == true)
-                          InfoTag(icon: Icons.videocam, label: 'Projetor'),
+                          InfoTag(icon: Icons.videocam, label: 'Projetor', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                         if (infoDaSala['has_tv'] == true)
-                          InfoTag(icon: Icons.tv, label: 'TV'),
+                          InfoTag(icon: Icons.tv, label: 'TV', textColor: Colors.white, fontSize: 13, iconSize: 16, background: Colors.white.withOpacity(0.08)),
                       ],
                     ),
                   ),
@@ -294,19 +317,19 @@ class ScheduleDayGrid extends StatelessWidget {
 }
 
 // Widget auxiliar para exibir uma tag de informação
-Widget InfoTag({required IconData icon, required String label}) {
+Widget InfoTag({required IconData icon, required String label, Color textColor = Colors.white, double fontSize = 13, double iconSize = 16, Color? background}) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
-      color: Colors.black.withOpacity(0.5),
-      borderRadius: BorderRadius.circular(20),
+      color: background ?? Colors.black.withOpacity(0.5),
+      borderRadius: BorderRadius.circular(16),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.orangeAccent, size: 18),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+        Icon(icon, color: Colors.orangeAccent, size: iconSize),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(color: textColor, fontSize: fontSize)),
       ],
     ),
   );

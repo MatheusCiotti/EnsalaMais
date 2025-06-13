@@ -5,9 +5,218 @@ import '../screens/users_screen.dart';
 import '../screens/allocation_form_screen.dart';
 import '../screens/schedule_view_screen.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import '../models/user.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> {
+  User? _currentUser;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await UserService.getCurrentUserData();
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  List<Widget> _buildMenuItems() {
+    if (_isLoading || _currentUser == null) {
+      return [
+        const Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        ),
+      ];
+    }
+
+    List<Widget> items = [];
+    final userRole = _currentUser!.role;
+
+    // Perfil - disponível para todos
+    items.add(
+      ListTile(
+        leading: const Icon(
+          Icons.person,
+          color: Colors.orange,
+        ),
+        title: const Text(
+          'Perfil',
+          style: TextStyle(color: Colors.white),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(context, '/profile');
+        },
+      ),
+    );
+
+    // Reservas - apenas para Professor
+    if (userRole == 'Professor') {
+      items.add(
+        ListTile(
+          leading: const Icon(
+            Icons.calendar_today,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Reservas',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            // TODO: Navegar para tela de reservas
+          },
+        ),
+      );
+    }
+
+    // Área Técnica - apenas para usuários da Área Técnica
+    if (userRole == 'Área Técnica') {
+      items.add(
+        ListTile(
+          leading: const Icon(
+            Icons.business,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Área Técnica',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TechnicalAreaScreen(),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Opções para Administração - todas exceto Área Técnica
+    if (userRole == 'Administração') {
+      items.addAll([
+        ListTile(
+          leading: const Icon(
+            Icons.calendar_today,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Reservas',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            // TODO: Navegar para tela de reservas
+          },
+        ),
+        ListTile(
+          leading: const Icon(
+            Icons.school,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Cursos',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CoursesScreen(),
+              ),
+            );
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.school, color: Colors.orange),
+          title: const Text(
+            'Aulas',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/classes');
+          },
+        ),
+        ListTile(
+          leading: const Icon(
+            Icons.person_add,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Usuários',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const UsersScreen(),
+              ),
+            );
+          },
+        ),
+        ListTile(
+          leading: const Icon(
+            Icons.add_box,
+            color: Colors.orange,
+          ),
+          title: const Text(
+            'Cadastrar Ensalamento',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AllocationFormScreen(),
+              ),
+            );
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.calendar_view_week_outlined, color: Colors.orange),
+          title: const Text('Ver Ensalamento', style: TextStyle(color: Colors.white)),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ScheduleViewScreen()),
+            );
+          },
+        ),
+      ]);
+    }
+
+    return items;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,132 +248,7 @@ class AppDrawer extends StatelessWidget {
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(
-              Icons.calendar_today,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Reservas',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navegar para tela de reservas
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.school,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Cursos',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CoursesScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.business,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Área Técnica',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TechnicalAreaScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.school, color: Colors.white),
-            title: const Text(
-              'Aulas',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/classes');
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.person,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Perfil',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navegar para tela de perfil
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.person_add,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Usuários',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UsersScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.add_box,
-              color: Colors.orange,
-            ),
-            title: const Text(
-              'Cadastrar Ensalamento',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AllocationFormScreen(),
-                ),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_view_week_outlined, color: Colors.orange),
-            title: const Text('Ver Ensalamento', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ScheduleViewScreen()),
-              );
-            },
-          ),
+          ..._buildMenuItems(),
           const Divider(color: Colors.white24),
           ListTile(
             leading: const Icon(

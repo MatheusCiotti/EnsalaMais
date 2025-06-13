@@ -29,6 +29,7 @@ class SupabaseService {
     required String email,
     required String password,
     required String fullName,
+    int? courseId,
   }) async {
     try {
       final AuthResponse response = await client.auth.signUp(
@@ -37,6 +38,7 @@ class SupabaseService {
         data: {
           'name': fullName,
           'role': 'Aluno',
+          if (courseId != null) 'course_id': courseId,
         },
       );
 
@@ -46,6 +48,18 @@ class SupabaseService {
 
       // Aguardar trigger criar registro na tabela users (se houver)
       await Future.delayed(const Duration(seconds: 1));
+
+      // Se o usuário foi criado com sucesso e tem course_id, atualizar na tabela users
+      if (courseId != null && response.user != null) {
+        try {
+          await client
+              .from('users')
+              .update({'course_id': courseId})
+              .eq('id', response.user!.id);
+        } catch (e) {
+          print('Aviso: Não foi possível atualizar course_id na tabela users: $e');
+        }
+      }
 
       return response;
     } on AuthException catch (e) {

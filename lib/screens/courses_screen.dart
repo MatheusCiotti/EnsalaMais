@@ -25,14 +25,20 @@ class _CoursesScreenState extends State<CoursesScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
+      print('DEBUG: Carregando cursos na tela de gestão...');
       final coursesData = await CoursesService.getCourses();
+      print('DEBUG: Dados recebidos: $coursesData');
+      print('DEBUG: Quantidade de cursos: ${coursesData.length}');
+      
       if (mounted) {
         setState(() {
           courses = coursesData.map((json) => Course.fromJson(json)).toList();
           _isLoading = false;
         });
+        print('DEBUG: Cursos convertidos: ${courses.length}');
       }
     } catch (e) {
+      print('DEBUG: Erro ao carregar cursos: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erro ao carregar cursos: $e')),

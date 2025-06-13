@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import '../services/courses_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,12 +13,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _isLoadingCourses = true;
   
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  List<Map<String, dynamic>> _courses = [];
+  int? _selectedCourseId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  Future<void> _loadCourses() async {
+    try {
+      final courses = await CoursesService.getCourses();
+      setState(() {
+        _courses = courses;
+        _isLoadingCourses = false;
+      });
+    } catch (e) {
+      setState(() {
+        _courses = []; // Garantir que a lista não seja null
+        _isLoadingCourses = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar cursos: $e'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Tentar novamente',
+              textColor: Colors.white,
+              onPressed: () {
+                setState(() {
+                  _isLoadingCourses = true;
+                });
+                _loadCourses();
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -38,6 +82,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (_selectedCourseId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, selecione um curso')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -45,6 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: _emailController.text,
         password: _passwordController.text,
         fullName: _fullNameController.text,
+        courseId: _selectedCourseId,
       );
 
       if (mounted) {
@@ -163,6 +215,88 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           fillColor: Colors.white.withOpacity(0.2),
                         ),
                       ),
+                      SizedBox(height: screenHeight * 0.02),
+                      // Dropdown para seleção de curso
+                      _isLoadingCourses
+                          ? Container(
+                              height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(30),
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                              child: const Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Carregando cursos...',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : _courses.isEmpty
+                              ? Container(
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    color: Colors.red.withOpacity(0.2),
+                                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Nenhum curso encontrado',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                )
+                              : DropdownButtonFormField<int>(
+                                  value: _selectedCourseId,
+                                  validator: (value) {
+                                    if (value == null) {
+                                      return 'Por favor, selecione um curso';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Selecione seu curso',
+                                    hintStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.school,
+                                      color: Colors.white,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white.withOpacity(0.2),
+                                  ),
+                                  dropdownColor: Colors.grey[800],
+                                  style: const TextStyle(color: Colors.white),
+                                  items: _courses.map<DropdownMenuItem<int>>((course) {
+                                    return DropdownMenuItem<int>(
+                                      value: course['id'],
+                                      child: Text(
+                                        '${course['name']} - ${course['semester']}º sem',
+                                        style: const TextStyle(color: Colors.white),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (int? value) {
+                                    setState(() {
+                                      _selectedCourseId = value;
+                                    });
+                                  },
+                                ),
                       SizedBox(height: screenHeight * 0.02),
                       TextFormField(
                         controller: _passwordController,
