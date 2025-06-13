@@ -47,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _currentUser = user;
           _nameController.text = user.name ?? '';
           _emailController.text = user.email ?? '';
-          _funcaoController.text = user.funcao ?? '';
+          _funcaoController.text = user.role ?? '';
           _selectedCourseId = user.courseId;
           _isLoading = false;
         });
@@ -182,34 +182,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Center(
                                   child: Column(
                                     children: [
-                                      CircleAvatar(
-                                        radius: 50,
-                                        backgroundColor: Colors.orange,
-                                        child: Text(
-                                          _currentUser?.name?.isNotEmpty == true
-                                              ? _currentUser!.name![0].toUpperCase()
-                                              : 'U',
-                                          style: const TextStyle(
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.orange.withOpacity(0.3),
+                                              blurRadius: 20,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 60,
+                                          backgroundColor: Colors.orange,
+                                          child: Text(
+                                            _currentUser?.name?.isNotEmpty == true
+                                                ? _currentUser!.name![0].toUpperCase()
+                                                : 'U',
+                                            style: const TextStyle(
+                                              fontSize: 36,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 20),
                                       Text(
                                         _currentUser?.name ?? 'Usuário',
                                         style: const TextStyle(
                                           color: Colors.white,
-                                          fontSize: 24,
+                                          fontSize: 26,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      Text(
-                                        _currentUser?.role ?? 'Sem função',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
-                                          fontSize: 16,
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [Colors.orange, Colors.deepOrange],
+                                          ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.orange.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          _currentUser?.role ?? 'Sem função',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -311,57 +341,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                                         // Curso (se aplicável)
                                         if (_currentUser?.role == 'Aluno' || _currentUser?.role == 'Professor')
-                                          _isLoadingCourses
-                                              ? Container(
-                                                  height: 60,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(30),
-                                                    color: Colors.white.withOpacity(0.1),
-                                                  ),
-                                                  child: const Center(
-                                                    child: CircularProgressIndicator(color: Colors.white),
-                                                  ),
-                                                )
-                                              : DropdownButtonFormField<int>(
-                                                  value: _selectedCourseId,
-                                                  style: const TextStyle(color: Colors.white),
-                                                  dropdownColor: Colors.grey[800],
-                                                  decoration: InputDecoration(
-                                                    labelText: 'Curso',
-                                                    labelStyle: const TextStyle(color: Colors.white),
-                                                    prefixIcon: const Icon(Icons.school, color: Colors.white),
-                                                    enabledBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(30),
-                                                      borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                                                    ),
-                                                    focusedBorder: OutlineInputBorder(
-                                                      borderRadius: BorderRadius.circular(30),
-                                                      borderSide: const BorderSide(color: Colors.orange),
-                                                    ),
-                                                    filled: true,
-                                                    fillColor: Colors.white.withOpacity(0.1),
-                                                  ),
-                                                  items: [
-                                                    const DropdownMenuItem<int>(
-                                                      value: null,
-                                                      child: Text('Selecione um curso', style: TextStyle(color: Colors.white)),
-                                                    ),
-                                                    ..._courses.map<DropdownMenuItem<int>>((course) {
-                                                      return DropdownMenuItem<int>(
-                                                        value: course['id'],
-                                                        child: Text(
-                                                          '${course['name']} - ${course['semester']}º sem',
-                                                          style: const TextStyle(color: Colors.white),
+                                          Column(
+                                            children: [
+                                              const SizedBox(height: 16),
+                                              _isLoadingCourses
+                                                  ? Container(
+                                                      height: 60,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        color: Colors.white.withOpacity(0.1),
+                                                      ),
+                                                      child: const Center(
+                                                        child: CircularProgressIndicator(color: Colors.white),
+                                                      ),
+                                                    )
+                                                  : DropdownButtonFormField<int>(
+                                                      value: _selectedCourseId,
+                                                      style: const TextStyle(color: Colors.white),
+                                                      dropdownColor: Colors.grey[800],
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Curso',
+                                                        labelStyle: const TextStyle(color: Colors.white),
+                                                        prefixIcon: const Icon(Icons.school, color: Colors.white),
+                                                        enabledBorder: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
                                                         ),
-                                                      );
-                                                    }).toList(),
-                                                  ],
-                                                  onChanged: (int? value) {
-                                                    setState(() {
-                                                      _selectedCourseId = value;
-                                                    });
-                                                  },
-                                                ),
+                                                        focusedBorder: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: const BorderSide(color: Colors.orange),
+                                                        ),
+                                                        filled: true,
+                                                        fillColor: Colors.white.withOpacity(0.1),
+                                                      ),
+                                                      items: [
+                                                        const DropdownMenuItem<int>(
+                                                          value: null,
+                                                          child: Text('Selecione um curso', style: TextStyle(color: Colors.white)),
+                                                        ),
+                                                        ..._courses.map<DropdownMenuItem<int>>((course) {
+                                                          return DropdownMenuItem<int>(
+                                                            value: course['id'],
+                                                            child: Text(
+                                                              '${course['name']} - ${course['semester']}º sem',
+                                                              style: const TextStyle(color: Colors.white),
+                                                            ),
+                                                          );
+                                                        }).toList(),
+                                                      ],
+                                                      onChanged: (int? value) {
+                                                        setState(() {
+                                                          _selectedCourseId = value;
+                                                        });
+                                                      },
+                                                    ),
+                                            ],
+                                          ),
                                       ],
                                     ),
                                   ),

@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingUser = true;
   bool _isLoadingSchedule = false;
   
-  List<Map<String, dynamic>> _todaySchedule = [];
+  Map<String, List<Map<String, dynamic>>> _weekSchedule = {};
 
   @override
   void initState() {
@@ -39,11 +39,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Carregar aulas baseado no tipo de usuário
       if (userData?.role == 'Aluno' && userData?.courseId != null) {
-        // Aluno: carregar aulas do curso
-        _loadTodaySchedule(userData!.courseId!);
+        // Aluno: carregar aulas do curso para a semana
+        _loadWeekSchedule(userData!.courseId!);
       } else if (userData?.role == 'Professor') {
-        // Professor: carregar suas próprias aulas
-        _loadProfessorSchedule(userData!.id!);
+        // Professor: carregar suas próprias aulas da semana
+        _loadProfessorWeekSchedule(userData!.id!);
       }
     } catch (e) {
       setState(() {
@@ -57,16 +57,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadTodaySchedule(int courseId) async {
+  Future<void> _loadWeekSchedule(int courseId) async {
     setState(() {
       _isLoadingSchedule = true;
     });
 
     try {
-      final schedule = await UserService.getTodayClassesByCourse(courseId);
-      print('Schedule carregado para aluno: $schedule');
+      final schedule = await UserService.getWeekClassesByCourse(courseId);
+      print('Schedule da semana carregado para aluno: $schedule');
       setState(() {
-        _todaySchedule = schedule;
+        _weekSchedule = schedule;
         _isLoadingSchedule = false;
       });
     } catch (e) {
@@ -81,16 +81,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadProfessorSchedule(String professorId) async {
+  Future<void> _loadProfessorWeekSchedule(String professorId) async {
     setState(() {
       _isLoadingSchedule = true;
     });
 
     try {
-      final schedule = await UserService.getTodayClassesByProfessor(professorId);
-      print('Schedule carregado para professor: $schedule');
+      final schedule = await UserService.getWeekClassesByProfessor(professorId);
+      print('Schedule da semana carregado para professor: $schedule');
       setState(() {
-        _todaySchedule = schedule;
+        _weekSchedule = schedule;
         _isLoadingSchedule = false;
       });
     } catch (e) {
@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           
           Text(
-            _currentUser?.role == 'Professor' ? 'Suas aulas de hoje:' : 'Suas aulas de hoje:',
+            _currentUser?.role == 'Professor' ? 'Suas aulas da semana:' : 'Suas aulas da semana:',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Colors.white),
                   )
-                : _todaySchedule.isEmpty
+                : _weekSchedule.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Nenhuma aula hoje!',
+                              'Nenhuma aula esta semana!',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.8),
                                 fontSize: 18,
@@ -246,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Aproveite seu dia livre 😊',
+                              'Aproveite sua semana livre 😊',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.6),
                                 fontSize: 16,
@@ -255,13 +255,165 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        itemCount: _todaySchedule.length,
-                        itemBuilder: (context, index) =>
-                            _buildScheduleCard(_todaySchedule[index]),
-                      ),
+                    : _buildWeekScheduleView(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWeekScheduleView() {
+    return DefaultTabController(
+      length: 7,
+      initialIndex: DateTime.now().weekday - 1, // Inicia no dia atual
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.4),
+                  Colors.black.withOpacity(0.2),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: TabBar(
+              isScrollable: false,
+              indicator: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.orange, Colors.deepOrange],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white.withOpacity(0.7),
+              labelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicatorPadding: const EdgeInsets.all(4),
+              tabs: const [
+                Tab(text: 'SEG'),
+                Tab(text: 'TER'),
+                Tab(text: 'QUA'),
+                Tab(text: 'QUI'),
+                Tab(text: 'SEX'),
+                Tab(text: 'SÁB'),
+                Tab(text: 'DOM'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: TabBarView(
+                  children: [
+                    _buildDaySchedule('Segunda-feira'),
+                    _buildDaySchedule('Terça-feira'),
+                    _buildDaySchedule('Quarta-feira'),
+                    _buildDaySchedule('Quinta-feira'),
+                    _buildDaySchedule('Sexta-feira'),
+                    _buildDaySchedule('Sábado'),
+                    _buildDaySchedule('Domingo'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDaySchedule(String dayOfWeek) {
+    final daySchedule = _weekSchedule[dayOfWeek] ?? [];
+    
+    if (daySchedule.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(50),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.free_breakfast,
+                  size: 32,
+                  color: Colors.white.withOpacity(0.8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Nenhuma aula',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Dia livre! 😊',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: daySchedule.length,
+      itemBuilder: (context, index) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: _buildScheduleCard(daySchedule[index]),
       ),
     );
   }
@@ -362,24 +514,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final professorName = classData?['professor']?['name'] ?? 'Professor não definido';
     final roomName = roomData?['nome'] ?? 'Sala não definida';
 
-    // Debug logs
-    print('=== DEBUG SCHEDULE CARD ===');
-    print('scheduleItem: $scheduleItem');
-    print('classData: $classData');
-    print('professor data: ${classData?['professor']}');
-    print('professorName extraído: $professorName');
-    print('========================');
-
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white,
+            Colors.grey.shade50,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.7),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -387,10 +542,32 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Colors.orange, Colors.deepOrange],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          timeSlot,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Text(
                     className,
                     style: const TextStyle(
@@ -402,64 +579,82 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 18,
-                        color: Colors.green,
+                      Icon(
+                        Icons.person,
+                        size: 16,
+                        color: Colors.grey.shade600,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        timeSlot,
-                        style: const TextStyle(
-                          color: Colors.black87,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          professorName,
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Prof. $professorName',
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
                   ),
                 ],
               ),
             ),
           ),
           Container(
-            height: 120,
-            width: 120,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF062825),
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(16),
-                bottomRight: Radius.circular(16),
+            height: 110,
+            width: 100,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF062825),
+                  Color(0xFF084A46),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(-2, 0),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const Icon(
+                  Icons.room,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
                 const Text(
                   'Sala',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  roomName,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    roomName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

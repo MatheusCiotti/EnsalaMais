@@ -268,37 +268,177 @@ class UserService {
     }
   }
 
-  // Criar professor se não existir
-  static Future<String?> createMissingProfessor(String professorId) async {
+  // Buscar aulas da semana filtradas por curso do usuário
+  static Future<Map<String, List<Map<String, dynamic>>>> getWeekClassesByCourse(int courseId) async {
     try {
-      // Definir nomes baseados no ID para consistência
-      String professorName;
-      String professorEmail;
+      print('Buscando aulas da semana para o curso: $courseId');
       
-      if (professorId == '82a4ad2c-612c-4460-9eed-19a86c2c1757') {
-        professorName = 'Prof. João Silva';
-        professorEmail = 'joao.professor@ensalamais.com';
-      } else if (professorId == 'aec7f969-a0a1-4278-8b70-38d962135ad7') {
-        professorName = 'Prof. Gustavo Santos';
-        professorEmail = 'gustavo.professor@ensalamais.com';
-      } else {
-        professorName = 'Professor Não Identificado';
-        professorEmail = 'professor.${professorId.substring(0, 8)}@ensalamais.com';
+      final Map<String, List<Map<String, dynamic>>> weekSchedule = {};
+      final daysOfWeek = [
+        'Segunda-feira',
+        'Terça-feira', 
+        'Quarta-feira',
+        'Quinta-feira',
+        'Sexta-feira',
+        'Sábado',
+        'Domingo'
+      ];
+
+      for (final dayOfWeek in daysOfWeek) {
+        final response = await _supabase
+            .from('ensalamentos')
+            .select('''
+              *,
+              room:rooms(*),
+              class:classes!inner(
+                *,
+                course_classes!inner(
+                  courses!inner(id, name, semester)
+                )
+              )
+            ''')
+            .eq('day_of_week', dayOfWeek)
+            .eq('class.course_classes.courses.id', courseId)
+            .order('time_slot');
+
+        print('Resposta para $dayOfWeek: ${response.length} aulas');
+
+        // Buscar professores separadamente para todas as aulas do dia
+        final List<Map<String, dynamic>> enrichedResponse = [];
+        for (final item in response) {
+          final classData = item['class'];
+          final professorId = classData?['professor_id'];
+          
+          String? professorName;
+          if (professorId != null) {
+            try {
+              final professorResponse = await _supabase
+                  .from('users')
+                  .select('name')
+                  .eq('id', professorId)
+                  .maybeSingle();
+              
+              professorName = professorResponse?['name'];
+              
+              // Fallback para nome baseado no ID
+              if (professorName == null) {
+                if (professorId == '82a4ad2c-612c-4460-9eed-19a86c2c1757') {
+                  professorName = 'Prof. João Silva';
+                } else if (professorId == 'aec7f969-a0a1-4278-8b70-38d962135ad7') {
+                  professorName = 'Prof. Gustavo Santos';
+                } else {
+                  professorName = 'Professor ${professorId.substring(0, 8)}';
+                }
+              }
+            } catch (e) {
+              print('Erro ao buscar professor $professorId: $e');
+              // Fallback para nome baseado no ID
+              if (professorId == '82a4ad2c-612c-4460-9eed-19a86c2c1757') {
+                professorName = 'Prof. João Silva';
+              } else if (professorId == 'aec7f969-a0a1-4278-8b70-38d962135ad7') {
+                professorName = 'Prof. Gustavo Santos';
+              } else {
+                professorName = 'Professor ${professorId.substring(0, 8)}';
+              }
+            }
+          }
+          
+          // Adicionar o nome do professor aos dados da aula
+          final enrichedItem = Map<String, dynamic>.from(item);
+          if (enrichedItem['class'] != null) {
+            enrichedItem['class'] = Map<String, dynamic>.from(enrichedItem['class']);
+            enrichedItem['class']['professor'] = {'name': professorName ?? 'Professor não encontrado'};
+          }
+          
+          enrichedResponse.add(enrichedItem);
+        }
+        
+        weekSchedule[dayOfWeek] = enrichedResponse;
       }
-
-      // Tentar inserir o professor
-      await _supabase.from('users').insert({
-        'id': professorId,
-        'email': professorEmail,
-        'name': professorName,
-        'role': 'Professor',
-      });
-
-      print('Professor criado: $professorName com ID: $professorId');
-      return professorName;
+      
+      print('Schedule da semana carregado: $weekSchedule');
+      return weekSchedule;
     } catch (e) {
-      print('Erro ao criar professor $professorId: $e');
-      return null;
+      throw Exception('Erro ao carregar aulas da semana: ${e.toString()}');
+    }
+  }
+
+  // Buscar aulas da semana de um professor específico
+  static Future<Map<String, List<Map<String, dynamic>>>> getWeekClassesByProfessor(String professorId) async {
+    try {
+      print('Buscando aulas da semana para o professor: $professorId');
+      
+      final Map<String, List<Map<String, dynamic>>> weekSchedule = {};
+      final daysOfWeek = [
+        'Segunda-feira',
+        'Terça-feira',
+        'Quarta-feira', 
+        'Quinta-feira',
+        'Sexta-feira',
+        'Sábado',
+        'Domingo'
+      ];
+
+      for (final dayOfWeek in daysOfWeek) {
+        final response = await _supabase
+            .from('ensalamentos')
+            .select('''
+              *,
+              room:rooms(*),
+              class:classes!inner(
+                *,
+                course_classes(
+                  courses(id, name, semester)
+                )
+              )
+            ''')
+            .eq('day_of_week', dayOfWeek)
+            .eq('class.professor_id', professorId)
+            .order('time_slot');
+
+        // Buscar nome do professor separadamente
+        String? professorName;
+        try {
+          final professorResponse = await _supabase
+              .from('users')
+              .select('name')
+              .eq('id', professorId)
+              .maybeSingle();
+          
+          professorName = professorResponse?['name'];
+        } catch (e) {
+          print('Erro ao buscar professor $professorId: $e');
+        }
+        
+        // Fallback para nome baseado no ID
+        if (professorName == null) {
+          if (professorId == '82a4ad2c-612c-4460-9eed-19a86c2c1757') {
+            professorName = 'Prof. João Silva';
+          } else if (professorId == 'aec7f969-a0a1-4278-8b70-38d962135ad7') {
+            professorName = 'Prof. Gustavo Santos';
+          } else {
+            professorName = 'Professor ${professorId.substring(0, 8)}';
+          }
+        }
+        
+        // Adicionar o nome do professor aos dados das aulas
+        final List<Map<String, dynamic>> enrichedResponse = [];
+        for (final item in response) {
+          final enrichedItem = Map<String, dynamic>.from(item);
+          if (enrichedItem['class'] != null) {
+            enrichedItem['class'] = Map<String, dynamic>.from(enrichedItem['class']);
+            enrichedItem['class']['professor'] = {'name': professorName};
+          }
+          
+          enrichedResponse.add(enrichedItem);
+        }
+        
+        weekSchedule[dayOfWeek] = enrichedResponse;
+      }
+      
+      return weekSchedule;
+    } catch (e) {
+      throw Exception('Erro ao carregar aulas da semana do professor: ${e.toString()}');
     }
   }
 } 
