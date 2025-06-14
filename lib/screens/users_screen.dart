@@ -43,7 +43,7 @@ class _UsersScreenState extends State<UsersScreen> {
     }
   }
 
-  // Função de ADICIONAR (supondo que já funcione, mas mantendo aqui)
+
   void _showAddUserDialog() {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
@@ -205,7 +205,6 @@ class _UsersScreenState extends State<UsersScreen> {
     );
   }
 
-  // ===== FUNÇÃO DE EDITAR AGORA COMPLETA E FUNCIONAL =====
   void _showEditUserDialog(User user) {
     final nameController = TextEditingController(text: user.name);
     final emailController = TextEditingController(text: user.email);
@@ -343,7 +342,7 @@ class _UsersScreenState extends State<UsersScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(icon: const Icon(Icons.edit, color: Colors.orange), onPressed: () => _showEditUserDialog(user)),
-                                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () { /* sua lógica de deletar */ }),
+                                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () { }),
                                 ],
                               ),
                             ),

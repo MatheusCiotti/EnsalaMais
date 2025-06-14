@@ -85,7 +85,6 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de reservas
           },
         ),
       );
@@ -130,7 +129,6 @@ class _AppDrawerState extends State<AppDrawer> {
           ),
           onTap: () {
             Navigator.pop(context);
-            // TODO: Navegar para tela de reservas
           },
         ),
         ListTile(

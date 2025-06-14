@@ -1,5 +1,3 @@
-// Este é o código completo e corrigido para o seu modelo de curso.
-
 class Course {
   final int id;
   final String name;
@@ -21,14 +19,11 @@ class Course {
     required this.createdAt,
   });
 
-  // ===== FACTORY CORRIGIDO E SEGURO =====
   factory Course.fromJson(Map<String, dynamic> json) {
-    // Função auxiliar para extrair o valor, seja de uma lista ou direto
     dynamic _extractValue(dynamic value) {
       return (value is List && value.isNotEmpty) ? value.first : value;
     }
 
-    // Tratamento seguro de valores nulos
     return Course(
       id: _extractValue(json['id']) as int? ?? 0,
       name: _extractValue(json['name']) as String? ?? 'Curso sem nome',

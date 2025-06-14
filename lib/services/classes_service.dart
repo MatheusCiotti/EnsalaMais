@@ -18,7 +18,6 @@ class ClassesService {
           .order('name');
 
       return response.map<Class>((json) {
-        // Adicionar os nomes do professor e sala ao JSON
         json['professor_name'] = json['professor']?['name'];
         json['room_name'] = json['room']?['nome'];
         return Class.fromJson(json);
@@ -143,7 +142,6 @@ class ClassesService {
             )
           )
         ''');
-      print('DADOS QUE CHEGARAM DO SUPABASE: $response');
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       throw Exception('Erro ao carregar ensalamento completo: ${e.toString()}');

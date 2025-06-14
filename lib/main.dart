@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-//import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
@@ -16,7 +15,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-// App principal
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -57,7 +55,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Tela de Login
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
